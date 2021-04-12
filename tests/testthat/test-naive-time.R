@@ -272,6 +272,58 @@ test_that("%Z is completely ignored", {
   )
 })
 
+test_that("parsing rounds parsed components more precise than the resulting container (#207)", {
+  expect_identical(
+    naive_time_parse("2019-12-31 11", format = "%Y-%m-%d %H", precision = "day"),
+    as_naive_time(year_month_day(2019, 12, 31))
+  )
+  expect_identical(
+    naive_time_parse("2019-12-31 12", format = "%Y-%m-%d %H", precision = "day"),
+    as_naive_time(year_month_day(2020, 1, 1))
+  )
+
+  # If you don't try and parse them, it won't round
+  expect_identical(
+    naive_time_parse("2019-12-31 12", format = "%Y-%m-%d", precision = "day"),
+    as_naive_time(year_month_day(2019, 12, 31))
+  )
+})
+
+test_that("parsing rounds parsed subsecond components more precise than the resulting container (#207)", {
+  # Default N for milliseconds is 6, so `%6S` (2 hour seconds, 1 for decimal, 3 for subseconds)
+  expect_identical(
+    naive_time_parse("2019-01-01 01:01:01.1238", format = "%Y-%m-%d %H:%M:%S", precision = "millisecond"),
+    as_naive_time(year_month_day(2019, 1, 1, 1, 1, 1, 123, subsecond_precision = "millisecond"))
+  )
+
+  # Requesting `%7S` parses the full `01.1238`, and the `1238` portion is rounded up
+  expect_identical(
+    naive_time_parse("2019-01-01 01:01:01.1238", format = "%Y-%m-%d %H:%M:%7S", precision = "millisecond"),
+    as_naive_time(year_month_day(2019, 1, 1, 1, 1, 1, 124, subsecond_precision = "millisecond"))
+  )
+})
+
+# ------------------------------------------------------------------------------
+# format()
+
+test_that("`%Z` generates format warnings (#204)", {
+  x <- naive_seconds(0)
+
+  expect_warning(format(x, format = "%Z"), class = "clock_warning_format_failures")
+
+  expect_snapshot(format(x, format = "%Z"))
+  expect_snapshot(format(c(x, x), format = "%Z"))
+})
+
+test_that("`%z` generates format warnings (#204)", {
+  x <- naive_seconds(0)
+
+  expect_warning(format(x, format = "%z"), class = "clock_warning_format_failures")
+
+  expect_snapshot(format(x, format = "%z"))
+  expect_snapshot(format(c(x, x), format = "%z"))
+})
+
 # ------------------------------------------------------------------------------
 # as_zoned_time()
 
@@ -494,6 +546,10 @@ test_that("strict mode can be activated - ambiguous", {
   expect_snapshot_error(as_zoned_time(naive_seconds(), zone, nonexistent = "roll-forward"))
   expect_snapshot_error(as_zoned_time(naive_seconds(), zone, nonexistent = "roll-forward", ambiguous = zt))
   expect_snapshot_error(as_zoned_time(naive_seconds(), zone, nonexistent = "roll-forward", ambiguous = list(zt, NULL)))
+})
+
+test_that("empty dots are checked", {
+  expect_snapshot_error(as_zoned_time(naive_seconds(), "UTC", "roll-forward"))
 })
 
 # ------------------------------------------------------------------------------

@@ -8,6 +8,9 @@ to_posixct <- function(x) {
   }
 }
 
+is_POSIXt <- function(x) {
+  inherits(x, "POSIXt")
+}
 is_POSIXct <- function(x) {
   inherits(x, "POSIXct")
 }
@@ -28,6 +31,18 @@ posixct_standardize <- function(x) {
 }
 to_posixct_from_posixlt <- function(x) {
   as.POSIXct.POSIXlt(x)
+}
+
+date_standardize <- function(x) {
+  if (identical(typeof(x), "double")) {
+    return(x)
+  }
+
+  # Convert somewhat rare integer Date to double.
+  # Preserves names.
+  storage.mode(x) <- "double"
+
+  x
 }
 
 # ------------------------------------------------------------------------------
@@ -157,28 +172,37 @@ stop_clock_unsupported_zoned_time_op <- function(op) {
 
 # Thrown from C++
 stop_clock_invalid_date <- function(i) {
-  message <- paste0(
-    "Invalid date found at location ", i, ". ",
-    "Resolve invalid date issues by specifying the `invalid` argument."
+  header <- paste0(
+    "Invalid date found at location ", i, "."
   )
+  bullet <- format_error_bullets(
+    c(i = "Resolve invalid date issues by specifying the `invalid` argument.")
+  )
+  message <- paste0(header, "\n", bullet)
   stop_clock(message, "clock_error_invalid_date")
 }
 
 # Thrown from C++
 stop_clock_nonexistent_time <- function(i) {
-  message <- paste0(
-    "Nonexistent time due to daylight saving time at location ", i, ". ",
-    "Resolve nonexistent time issues by specifying the `nonexistent` argument."
+  header <- paste0(
+    "Nonexistent time due to daylight saving time at location ", i, "."
   )
+  bullet <- format_error_bullets(
+    c(i = "Resolve nonexistent time issues by specifying the `nonexistent` argument.")
+  )
+  message <- paste0(header, "\n", bullet)
   stop_clock(message, "clock_error_nonexistent_time")
 }
 
 # Thrown from C++
 stop_clock_ambiguous_time <- function(i) {
-  message <- paste0(
-    "Ambiguous time due to daylight saving time at location ", i, ". ",
-    "Resolve ambiguous time issues by specifying the `ambiguous` argument."
+  header <- paste0(
+    "Ambiguous time due to daylight saving time at location ", i, "."
   )
+  bullet <- format_error_bullets(
+    c(i = "Resolve ambiguous time issues by specifying the `ambiguous` argument.")
+  )
+  message <- paste0(header, "\n", bullet)
   stop_clock(message, "clock_error_ambiguous_time")
 }
 
@@ -196,7 +220,7 @@ warn_clock <- function(message, class = character()) {
 # Thrown from C++
 warn_clock_parse_failures <- function(n, first) {
   if (n == 0) {
-    abort("Internal error: warning thrown with zero parse failures.")
+    abort("Internal error: warning thrown with zero failures.")
   } else if (n == 1) {
     message <- paste0(
       "Failed to parse 1 string at location ", first, ". ",
@@ -210,6 +234,25 @@ warn_clock_parse_failures <- function(n, first) {
   }
 
   warn_clock(message, "clock_warning_parse_failures")
+}
+
+# Thrown from C++
+warn_clock_format_failures <- function(n, first) {
+  if (n == 0) {
+    abort("Internal error: warning thrown with zero failures.")
+  } else if (n == 1) {
+    message <- paste0(
+      "Failed to format 1 string at location ", first, ". ",
+      "Returning `NA` at that location."
+    )
+  } else {
+    message <- paste0(
+      "Failed to format ", n, " strings, beginning at location ", first, ". ",
+      "Returning `NA` at the locations where there were format failures."
+    )
+  }
+
+  warn_clock(message, "clock_warning_format_failures")
 }
 
 # ------------------------------------------------------------------------------

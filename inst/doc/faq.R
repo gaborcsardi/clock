@@ -157,6 +157,32 @@ naive_time_parse(
 # Reset old options
 options(old)
 
+## -----------------------------------------------------------------------------
+x <- as.Date("2019-01-01")
+x
+
+withr::with_timezone("America/New_York", {
+  print(as.POSIXct(x))
+})
+
+## -----------------------------------------------------------------------------
+as_zoned_time(x, "UTC")
+
+as_zoned_time(x, "America/New_York")
+
+as_zoned_time(x, "Europe/London")
+
+## -----------------------------------------------------------------------------
+x <- as.POSIXct("2019-01-01 23:00:00", "America/New_York")
+
+as.Date(x, tz = date_zone(x))
+
+## -----------------------------------------------------------------------------
+utc <- date_set_zone(x, "UTC")
+utc
+
+as.Date(utc, tz = date_zone(utc))
+
 ## ---- eval=FALSE--------------------------------------------------------------
 #  library(data.table)
 #  

@@ -1,6 +1,27 @@
+# can't accidentally supply `zone` to reinterpret date-time in new zone
+
+    `...` is not empty.
+    
+    We detected these problematic arguments:
+    * `zone`
+    
+    These dots only exist to allow future extensions and should be empty.
+    Did you misspecify an argument?
+
+# can resolve nonexistent midnight issues for Date -> POSIXct
+
+    Nonexistent time due to daylight saving time at location 1.
+    i Resolve nonexistent time issues by specifying the `nonexistent` argument.
+
+# can resolve ambiguous midnight issues for Date -> POSIXct
+
+    Ambiguous time due to daylight saving time at location 1.
+    i Resolve ambiguous time issues by specifying the `ambiguous` argument.
+
 # can handle nonexistent times resulting from grouping
 
-    Nonexistent time due to daylight saving time at location 1. Resolve nonexistent time issues by specifying the `nonexistent` argument.
+    Nonexistent time due to daylight saving time at location 1.
+    i Resolve nonexistent time issues by specifying the `nonexistent` argument.
 
 # can't group by finer precisions
 
@@ -12,7 +33,8 @@
 
 # flooring can handle nonexistent times
 
-    Nonexistent time due to daylight saving time at location 2. Resolve nonexistent time issues by specifying the `nonexistent` argument.
+    Nonexistent time due to daylight saving time at location 2.
+    i Resolve nonexistent time issues by specifying the `nonexistent` argument.
 
 # `origin` is floored to the precision of `precision` with a potential warning before rounding
 
@@ -79,11 +101,11 @@
     T: 23:59:59
     X: 23:59:59
     r: 11:59:59 PM
+    c: Mon Dec 31 23:59:59 2018
+    %: %
     z: -0500
     Ez: -05:00
     Z: America/New_York
-    c: Mon Dec 31 23:59:59 2018
-    %: %
 
 ---
 
@@ -117,19 +139,21 @@
     T: 23:59:59
     X: 23:59:59
     r: 11:59:59 PM
+    c: lun. déc. 31 23:59:59 2018
+    %: %
     z: -0500
     Ez: -05:00
     Z: America/New_York
-    c: lun. déc. 31 23:59:59 2018
-    %: %
 
 # can resolve ambiguity and nonexistent times
 
-    Nonexistent time due to daylight saving time at location 1. Resolve nonexistent time issues by specifying the `nonexistent` argument.
+    Nonexistent time due to daylight saving time at location 1.
+    i Resolve nonexistent time issues by specifying the `nonexistent` argument.
 
 ---
 
-    Ambiguous time due to daylight saving time at location 1. Resolve ambiguous time issues by specifying the `ambiguous` argument.
+    Ambiguous time due to daylight saving time at location 1.
+    i Resolve ambiguous time issues by specifying the `ambiguous` argument.
 
 # failure to parse throws a warning
 
@@ -160,7 +184,8 @@
 
 # `ambiguous = x` retains the offset of `x` if applicable
 
-    Ambiguous time due to daylight saving time at location 1. Resolve ambiguous time issues by specifying the `ambiguous` argument.
+    Ambiguous time due to daylight saving time at location 1.
+    i Resolve ambiguous time issues by specifying the `ambiguous` argument.
 
 # `zone` is required
 
@@ -168,15 +193,18 @@
 
 # can handle invalid dates
 
-    Invalid date found at location 2. Resolve invalid date issues by specifying the `invalid` argument.
+    Invalid date found at location 2.
+    i Resolve invalid date issues by specifying the `invalid` argument.
 
 # can handle nonexistent times
 
-    Nonexistent time due to daylight saving time at location 1. Resolve nonexistent time issues by specifying the `nonexistent` argument.
+    Nonexistent time due to daylight saving time at location 1.
+    i Resolve nonexistent time issues by specifying the `nonexistent` argument.
 
 # can handle ambiguous times
 
-    Ambiguous time due to daylight saving time at location 1. Resolve ambiguous time issues by specifying the `ambiguous` argument.
+    Ambiguous time due to daylight saving time at location 1.
+    i Resolve ambiguous time issues by specifying the `ambiguous` argument.
 
 # <posixt> op <duration>
 

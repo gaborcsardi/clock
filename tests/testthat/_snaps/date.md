@@ -2,6 +2,16 @@
 
     Conversion from a calendar requires that all dates are valid. Resolve invalid dates by calling `invalid_resolve()`.
 
+# can resolve nonexistent midnight issues
+
+    Nonexistent time due to daylight saving time at location 1.
+    i Resolve nonexistent time issues by specifying the `nonexistent` argument.
+
+# can resolve ambiguous midnight issues
+
+    Ambiguous time due to daylight saving time at location 1.
+    i Resolve ambiguous time issues by specifying the `ambiguous` argument.
+
 # can't group by finer precisions
 
     Can't group at a precision (hour) that is more precise than `x` (day).
@@ -70,9 +80,6 @@
     T: 00:00:00
     X: 00:00:00
     r: 12:00:00 AM
-    z: +0000
-    Ez: +00:00
-    Z: UTC
     c: Mon Dec 31 00:00:00 2018
     %: %
 
@@ -108,15 +115,26 @@
     T: 00:00:00
     X: 00:00:00
     r: 12:00:00 AM
-    z: +0000
-    Ez: +00:00
-    Z: UTC
     c: lun. déc. 31 00:00:00 2018
     %: %
 
-# can't set the zone of a Date
+# formatting Dates with `%z` or `%Z` returns NA with a warning
 
-    'Date' objects are required to be UTC.
+    Code
+      date_format(x, format = "%z")
+    Warning <clock_warning_format_failures>
+      Failed to format 1 string at location 1. Returning `NA` at that location.
+    Output
+      [1] NA
+
+---
+
+    Code
+      date_format(x, format = "%Z")
+    Warning <clock_warning_format_failures>
+      Failed to format 1 string at location 1. Returning `NA` at that location.
+    Output
+      [1] NA
 
 # failure to parse throws a warning
 
@@ -129,7 +147,16 @@
 
 # can handle invalid dates
 
-    Invalid date found at location 2. Resolve invalid date issues by specifying the `invalid` argument.
+    Invalid date found at location 2.
+    i Resolve invalid date issues by specifying the `invalid` argument.
+
+# cannot get the zone of a Date
+
+    Can't get the zone of a 'Date'.
+
+# cannot set the zone of a Date
+
+    Can't set the zone of a 'Date'.
 
 # <date> op <duration>
 

@@ -106,7 +106,7 @@ as.POSIXct.clock_calendar <- function(x,
 #' @export
 as.POSIXct.clock_sys_time <- function(x, tz = "", ...) {
   zone <- zone_validate(tz)
-  x <- time_point_cast(x, "second")
+  x <- time_point_floor(x, "second")
   seconds <- to_sys_seconds_from_sys_duration_fields_cpp(x)
   names(seconds) <- clock_rcrd_names(x)
   new_datetime(seconds, zone)
@@ -154,6 +154,118 @@ as.POSIXlt.clock_naive_time <- as.POSIXlt.clock_calendar
 as.POSIXlt.clock_zoned_time <- function(x, ...) {
   x <- as.POSIXct(x, ...)
   as.POSIXlt(x)
+}
+
+# ------------------------------------------------------------------------------
+
+#' Convert to a date-time
+#'
+#' @description
+#' `as_date_time()` is a generic function that converts its input to a date-time
+#' (POSIXct).
+#'
+#' There are methods for converting dates (Date), calendars, time points, and
+#' zoned-times to date-times.
+#'
+#' For converting to a date, see [as_date()].
+#'
+#' @details
+#' Note that clock always assumes that R's Date class is naive, so converting
+#' a Date to a POSIXct will always attempt to retain the printed year, month,
+#' and day. Where possible, the resulting time will be at midnight (`00:00:00`),
+#' but in some rare cases this is not possible due to daylight saving time. If
+#' that issue ever arises, an error will be thrown, which can be resolved by
+#' explicitly supplying `nonexistent` or `ambiguous`.
+#'
+#' This is not a drop-in replacement for `as.POSIXct()`, as it only converts a
+#' limited set of types to POSIXct. For parsing characters as date-times, see
+#' [date_time_parse()]. For converting numerics to date-times, see
+#' [vctrs::new_datetime()] or continue to use `as.POSIXct()`.
+#'
+#' @inheritParams as-zoned-time-naive-time
+#'
+#' @param x `[vector]`
+#'
+#'   A vector.
+#'
+#' @return A date-time with the same length as `x`.
+#'
+#' @export
+#' @examples
+#' x <- as.Date("2019-01-01")
+#'
+#' # `as.POSIXct()` will always treat Date as UTC, but will show the result
+#' # of the conversion in your system time zone, which can be somewhat confusing
+#' if (rlang::is_installed("withr")) {
+#'   withr::with_timezone("UTC", print(as.POSIXct(x)))
+#'   withr::with_timezone("Europe/Paris", print(as.POSIXct(x)))
+#'   withr::with_timezone("America/New_York", print(as.POSIXct(x)))
+#' }
+#'
+#' # `as_date_time()` will treat Date as naive, which means that the original
+#' # printed date will attempt to be kept wherever possible, no matter the
+#' # time zone. The time will be set to midnight.
+#' as_date_time(x, "UTC")
+#' as_date_time(x, "Europe/Paris")
+#' as_date_time(x, "America/New_York")
+#'
+#' # In some rare cases, this is not possible.
+#' # For example, in Asia/Beirut, there was a DST gap from
+#' # 2021-03-27 23:59:59 -> 2021-03-28 01:00:00,
+#' # skipping the 0th hour entirely.
+#' x <- as.Date("2021-03-28")
+#' try(as_date_time(x, "Asia/Beirut"))
+#'
+#' # To resolve this, set a `nonexistent` time resolution strategy
+#' as_date_time(x, "Asia/Beirut", nonexistent = "roll-forward")
+#'
+#'
+#' # You can also convert to date-time from other clock types
+#' as_date_time(year_month_day(2019, 2, 3, 03), "America/New_York")
+as_date_time <- function(x, ...) {
+  UseMethod("as_date_time")
+}
+
+#' @rdname as_date_time
+#' @export
+as_date_time.POSIXt <- function(x, ...) {
+  check_dots_empty()
+  to_posixct(x)
+}
+
+#' @rdname as_date_time
+#' @export
+as_date_time.Date <- function(x, zone, ..., nonexistent = NULL, ambiguous = NULL) {
+  check_dots_empty()
+  as.POSIXct(as_naive_time(x), tz = zone, nonexistent = nonexistent, ambiguous = ambiguous)
+}
+
+#' @rdname as_date_time
+#' @export
+as_date_time.clock_calendar <- function(x, zone, ..., nonexistent = NULL, ambiguous = NULL) {
+  check_dots_empty()
+  as.POSIXct(x, tz = zone, nonexistent = nonexistent, ambiguous = ambiguous)
+}
+
+#' @rdname as_date_time
+#' @export
+as_date_time.clock_sys_time <- function(x, zone, ...) {
+  check_dots_empty()
+  as.POSIXct(x, tz = zone)
+}
+
+#' @rdname as_date_time
+#' @export
+as_date_time.clock_naive_time <- function(x, zone, ..., nonexistent = NULL, ambiguous = NULL) {
+  check_dots_empty()
+  as.POSIXct(x, tz = zone, nonexistent = nonexistent, ambiguous = ambiguous)
+}
+
+#' @rdname as_date_time
+#' @export
+as_date_time.clock_zoned_time <- function(x, ...) {
+  check_dots_empty()
+  as.POSIXct(x)
 }
 
 # ------------------------------------------------------------------------------
@@ -848,7 +960,45 @@ date_month_factor.POSIXt <- function(x,
 
 # ------------------------------------------------------------------------------
 
+#' Formatting: date-time
+#'
+#' @description
+#' This is a POSIXct method for the [date_format()] generic.
+#'
+#' `date_format()` formats a date-time (POSIXct) using a `format` string.
+#'
+#' If `format` is `NULL`, a default format of `"%Y-%m-%d %H:%M:%S%Ez[%Z]"` is
+#' used. This maximizes the chance for constructing a string that can be
+#' reproducibly parsed into a valid date-time using
+#' [date_time_parse_complete()].
+#'
+#' @inheritParams ellipsis::dots_empty
+#' @inheritParams format.clock_zoned_time
+#'
+#' @param x `[POSIXct / POSIXlt]`
+#'
+#'   A date-time vector.
+#'
+#' @return A character vector of the formatted input.
+#'
+#' @name posixt-formatting
+#'
 #' @export
+#' @examples
+#' x <- date_time_parse(
+#'   c("1970-04-26 01:30:00", "1970-04-26 03:30:00"),
+#'   zone = "America/New_York"
+#' )
+#'
+#' # Default
+#' date_format(x)
+#'
+#' date_format(x, format = "%B %d, %Y %H:%M:%S")
+#'
+#' # By default, `%Z` uses the full zone name, but you can switch to the
+#' # abbreviated name
+#' date_format(x, format = "%z %Z")
+#' date_format(x, format = "%z %Z", abbreviate_zone = TRUE)
 date_format.POSIXt <- function(x,
                                ...,
                                format = NULL,
@@ -861,9 +1011,91 @@ date_format.POSIXt <- function(x,
 
 # ------------------------------------------------------------------------------
 
+#' Get or set the time zone
+#'
+#' @description
+#' - `date_zone()` gets the time zone.
+#'
+#' - `date_set_zone()` sets the time zone. This retains the _underlying
+#' duration_, but changes the _printed time_ depending on the zone that is
+#' chosen.
+#'
+#' @details
+#' This function is only valid for date-times, as clock treats R's Date class as
+#' a _naive_ type, which always has a yet-to-be-specified time zone.
+#'
+#' @param x `[POSIXct / POSIXlt]`
+#'
+#'   A date-time vector.
+#'
+#' @param zone `[character(1)]`
+#'
+#'   A valid time zone to switch to.
+#'
+#' @return
+#' - `date_zone()` returns a string containing the time zone.
+#'
+#' - `date_set_zone()` returns `x` with an altered printed time. The
+#' underlying duration is not changed.
+#'
+#' @name date-zone
+#'
+#' @examples
+#' library(magrittr)
+#'
+#' # Cannot set or get the zone of Date.
+#' # clock assumes that Dates are naive types, like naive-time.
+#' x <- as.Date("2019-01-01")
+#' try(date_zone(x))
+#' try(date_set_zone(x, "America/New_York"))
+#'
+#' x <- as.POSIXct("2019-01-02 01:30:00", tz = "America/New_York")
+#' x
+#'
+#' date_zone(x)
+#'
+#' # If it is 1:30am in New York, what time is it in Los Angeles?
+#' # Same underlying duration, new printed time
+#' date_set_zone(x, "America/Los_Angeles")
+#'
+#' # If you want to retain the printed time, but change the underlying duration,
+#' # convert to a naive-time to drop the time zone, then convert back to a
+#' # date-time. Be aware that this requires that you handle daylight saving time
+#' # irregularities with the `nonexistent` and `ambiguous` arguments to
+#' # `as.POSIXct()`!
+#' x %>%
+#'   as_naive_time() %>%
+#'   as.POSIXct("America/Los_Angeles")
+#'
+#' y <- as.POSIXct("2021-03-28 03:30:00", "America/New_York")
+#' y
+#'
+#' y_nt <- as_naive_time(y)
+#' y_nt
+#'
+#' # Helsinki had a daylight saving time gap where they jumped from
+#' # 02:59:59 -> 04:00:00
+#' try(as.POSIXct(y_nt, "Europe/Helsinki"))
+#'
+#' as.POSIXct(y_nt, "Europe/Helsinki", nonexistent = "roll-forward")
+#' as.POSIXct(y_nt, "Europe/Helsinki", nonexistent = "roll-backward")
+NULL
+
+#' @rdname date-zone
+#' @export
+date_zone <- function(x) {
+  UseMethod("date_zone")
+}
+
 #' @export
 date_zone.POSIXt <- function(x) {
   posixt_tzone(x)
+}
+
+#' @rdname date-zone
+#' @export
+date_set_zone <- function(x, zone) {
+  UseMethod("date_set_zone")
 }
 
 #' @export
@@ -932,6 +1164,10 @@ date_set_zone.POSIXt <- function(x, zone) {
 #' `NA`s, or completely fails to parse, then no time zone will be able to be
 #' determined. In that case, the result will use `"UTC"`.
 #'
+#' If manually parsing sub-second components, be aware that they will be
+#' automatically rounded to the nearest second when converting them to POSIXct.
+#' See the examples for a way to control this.
+#'
 #' @inheritParams zoned-parsing
 #' @inheritParams as-zoned-time-naive-time
 #'
@@ -985,6 +1221,30 @@ date_set_zone.POSIXt <- function(x, zone) {
 #'   "1970-10-25 01:00:00 EST"
 #' )
 #' date_time_parse_abbrev(abbrev_times, "America/New_York")
+#'
+#' # ---------------------------------------------------------------------------
+#' # Rounding of sub-second components
+#'
+#' # Generally, if you have a string with sub-second components, they will
+#' # be ignored when parsing into a date-time
+#' x <- c("2019-01-01 00:00:01.1", "2019-01-01 00:00:01.7")
+#'
+#' date_time_parse(x, "America/New_York")
+#'
+#' # If you manually try and parse those sub-second components with `%4S` to
+#' # read the 2 seconds, 1 decimal point, and 1 fractional component, the
+#' # fractional component will be rounded to the nearest second
+#' date_time_parse(x, "America/New_York", format = "%Y-%m-%d %H:%M:%4S")
+#'
+#' # If you don't like this, parse the full string as a naive-time,
+#' # then round manually and convert to a POSIXct
+#' nt <- naive_time_parse(x, format = "%Y-%m-%d %H:%M:%S", precision = "millisecond")
+#' nt
+#'
+#' nt <- time_point_floor(nt, "second")
+#' nt
+#'
+#' as.POSIXct(nt, "America/New_York")
 NULL
 
 #' @rdname date-time-parse
@@ -1155,4 +1415,12 @@ date_time_build <- function(year,
   x <- year_month_day(year, month, day, hour, minute, second)
   x <- invalid_resolve(x, invalid = invalid)
   as.POSIXct(x, tz = zone, nonexistent = nonexistent, ambiguous = ambiguous)
+}
+
+# ------------------------------------------------------------------------------
+
+#' @rdname date-today
+#' @export
+date_now <- function(zone) {
+  as.POSIXct(zoned_time_now(zone))
 }

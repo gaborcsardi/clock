@@ -152,7 +152,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-02-01&quot; &quot;2019-02-02&quot; &quot;2019-02-03&quot; &quot;2019-02-04&quot; &quot;2019-02-05&quot;</span></span></code></pre></div>
 <p>If you happen to specify an <em>invalid date</em>, you’ll get an error message:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">date_build</span>(<span class="dv">2019</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>, <span class="dv">31</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: Invalid date found at location 2. Resolve invalid date issues by specifying the `invalid` argument.</span></span></code></pre></div>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: Invalid date found at location 2.</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ℹ Resolve invalid date issues by specifying the `invalid` argument.</span></span></code></pre></div>
 <p>One way to resolve this is by specifying an invalid date resolution strategy using the <code>invalid</code> argument. There are multiple options, but in this case we’ll ask for the invalid dates to be set to the previous valid moment in time.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">date_build</span>(<span class="dv">2019</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">12</span>, <span class="dv">31</span>, <span class="at">invalid =</span> <span class="st">&quot;previous&quot;</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  [1] &quot;2019-01-31&quot; &quot;2019-02-28&quot; &quot;2019-03-31&quot; &quot;2019-04-30&quot; &quot;2019-05-31&quot;</span></span>
@@ -171,7 +172,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [5] &quot;2019-05-01 02:30:00 EDT&quot;</span></span></code></pre></div>
 <p>If you “build” a time that doesn’t exist, you’ll get an error. For example, on March 8th, 2020, there was a daylight saving time gap of 1 hour in the America/New_York time zone that took us from <code>01:59:59</code> directly to <code>03:00:00</code>, skipping the 2 o’clock hour entirely. Let’s “accidentally” create a time in that gap:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">date_time_build</span>(<span class="dv">2019</span><span class="sc">:</span><span class="dv">2021</span>, <span class="dv">3</span>, <span class="dv">8</span>, <span class="dv">2</span>, <span class="dv">30</span>, <span class="at">zone =</span> <span class="st">&quot;America/New_York&quot;</span>)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: Nonexistent time due to daylight saving time at location 2. Resolve nonexistent time issues by specifying the `nonexistent` argument.</span></span></code></pre></div>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: Nonexistent time due to daylight saving time at location 2.</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ℹ Resolve nonexistent time issues by specifying the `nonexistent` argument.</span></span></code></pre></div>
 <p>To resolve this issue, we can specify a nonexistent time resolution strategy through the <code>nonexistent</code> argument. There are a number of options, including rolling forward or backward to the next or previous valid moments in time:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>zone <span class="ot">&lt;-</span> <span class="st">&quot;America/New_York&quot;</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -230,7 +232,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-11-01 01:00:00 EST&quot;</span></span></code></pre></div>
 <p>The following string doesn’t include any information about which of these two 1 o’clocks it belongs to, so it is considered <em>ambiguous</em>. Ambiguous times will error when parsing:</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">date_time_parse</span>(<span class="st">&quot;2020-11-01 01:30:00&quot;</span>, <span class="st">&quot;America/New_York&quot;</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: Ambiguous time due to daylight saving time at location 1. Resolve ambiguous time issues by specifying the `ambiguous` argument.</span></span></code></pre></div>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: Ambiguous time due to daylight saving time at location 1.</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ℹ Resolve ambiguous time issues by specifying the `ambiguous` argument.</span></span></code></pre></div>
 <p>To fix that, you can specify an ambiguous time resolution strategy with the <code>ambiguous</code> argument.</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>zone <span class="ot">&lt;-</span> <span class="st">&quot;America/New_York&quot;</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -396,7 +399,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">date_build</span>(<span class="dv">2020</span>, <span class="dv">1</span>, <span class="dv">31</span>)</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="fu">add_months</span>(x, <span class="dv">1</span>)</span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: Invalid date found at location 1. Resolve invalid date issues by specifying the `invalid` argument.</span></span></code></pre></div>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: Invalid date found at location 1.</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ℹ Resolve invalid date issues by specifying the `invalid` argument.</span></span></code></pre></div>
 <p>clock gives you the power to handle this through the <code>invalid</code> option:</p>
 <div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The previous valid moment in time</span></span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_months</span>(x, <span class="dv">1</span>, <span class="at">invalid =</span> <span class="st">&quot;previous&quot;</span>)</span>
@@ -439,7 +443,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Daylight saving time gap on the 26th between 01:59:59 -&gt; 03:00:00</span></span>
 <span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>x <span class="sc">%&gt;%</span> <span class="fu">add_days</span>(<span class="dv">1</span>)</span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: Nonexistent time due to daylight saving time at location 1. Resolve nonexistent time issues by specifying the `nonexistent` argument.</span></span></code></pre></div>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: Nonexistent time due to daylight saving time at location 1.</span></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ℹ Resolve nonexistent time issues by specifying the `nonexistent` argument.</span></span></code></pre></div>
 <p>You can solve this using the <code>nonexistent</code> argument to control how these times should be handled.</p>
 <div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Roll forward to the next valid moment in time</span></span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>x <span class="sc">%&gt;%</span> <span class="fu">add_days</span>(<span class="dv">1</span>, <span class="at">nonexistent =</span> <span class="st">&quot;roll-forward&quot;</span>)</span>
@@ -480,12 +485,13 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>x <span class="sc">%&gt;%</span></span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_day</span>(<span class="dv">31</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_month</span>(<span class="dv">4</span>)</span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: Invalid date found at location 1. Resolve invalid date issues by specifying the `invalid` argument.</span></span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>x <span class="sc">%&gt;%</span></span>
-<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_day</span>(<span class="dv">31</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_month</span>(<span class="dv">4</span>, <span class="at">invalid =</span> <span class="st">&quot;previous&quot;</span>)</span>
-<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-04-30&quot;</span></span></code></pre></div>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Error: Invalid date found at location 1.</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; ℹ Resolve invalid date issues by specifying the `invalid` argument.</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>x <span class="sc">%&gt;%</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_day</span>(<span class="dv">31</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_month</span>(<span class="dv">4</span>, <span class="at">invalid =</span> <span class="st">&quot;previous&quot;</span>)</span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-04-30&quot;</span></span></code></pre></div>
 <p>You can additionally set the hour, minute, and second of a POSIXct.</p>
 <div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">date_time_build</span>(<span class="dv">2020</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="at">zone =</span> <span class="st">&quot;America/New_York&quot;</span>)</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>x</span>

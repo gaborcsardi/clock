@@ -95,7 +95,7 @@
 
 ---
 
-    Can't convert `n` <character> to <integer>.
+    Can't convert `by` <character> to <integer>.
 
 # `by` must be castable to the type of `from`
 
@@ -148,11 +148,11 @@
 
 # seq() enforces non-fractional results
 
-    Usage of `length.out` or `along.with` must generate a non-fractional sequence between `from` and `to`.
+    The supplied output size does not result in a non-fractional sequence between `from` and `to`.
 
 ---
 
-    Usage of `length.out` or `along.with` must generate a non-fractional sequence between `from` and `to`.
+    The supplied output size does not result in a non-fractional sequence between `from` and `to`.
 
 # `to` is always cast to `from`
 

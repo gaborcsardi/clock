@@ -18,6 +18,7 @@ Provides a comprehensive library for date-time manipulations
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://clock.r-lib.org}
   \item \url{https://github.com/r-lib/clock}
   \item Report bugs at \url{https://github.com/r-lib/clock/issues}
 }
@@ -28,7 +29,6 @@ Useful links:
 
 Other contributors:
 \itemize{
-  \item Howard Hinnant (Author of the included date library) [copyright holder]
   \item RStudio [copyright holder, funder]
 }
 

@@ -151,6 +151,31 @@ to <- as_naive_time(year_month_day(2019, 1, 1, 12, 30, 00))
 seq(from, to, by = duration_minutes(90))
 
 ## -----------------------------------------------------------------------------
+date_seq(date_build(2019, 1), by = 2, total_size = 10)
+
+## -----------------------------------------------------------------------------
+date_seq(date_build(2019, 1), by = duration_months(2), total_size = 10)
+
+## ---- error=TRUE--------------------------------------------------------------
+date_seq(
+  date_build(2019, 1, 1),
+  to = date_build(2019, 10, 2),
+  by = duration_months(2)
+)
+
+## ---- error=TRUE--------------------------------------------------------------
+jan31 <- date_build(2019, 1, 31)
+dec31 <- date_build(2019, 12, 31)
+
+date_seq(jan31, to = dec31, by = duration_months(1))
+
+## -----------------------------------------------------------------------------
+date_seq(jan31, to = dec31, by = duration_months(1), invalid = "previous")
+
+## -----------------------------------------------------------------------------
+seq(jan31, to = dec31, by = "1 month")
+
+## -----------------------------------------------------------------------------
 from <- as_naive_time(year_month_day(2019, 1, 1))
 to <- as_naive_time(year_month_day(2019, 12, 31))
 
@@ -275,7 +300,7 @@ naive_find_by_abbrev <- function(x, abbrev) {
     abort("`abbrev` must be a single string.")
   }
   
-  zones <- zone_database_names()
+  zones <- tzdb_names()
   info <- naive_time_info(x, zones)
   info$zones <- zones
   

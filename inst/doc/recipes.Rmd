@@ -255,6 +255,53 @@ to <- as_naive_time(year_month_day(2019, 1, 1, 12, 30, 00))
 seq(from, to, by = duration_minutes(90))
 ```
 
+### High level API
+
+In the high level API, you can use `date_seq()` to generate sequences. This doesn't have all of the flexibility of the `seq()` methods above, but is still extremely useful and has the added benefit of switching between calendars, sys-times, and naive-times automatically for you.
+
+If an integer `by` is supplied with a date `from`, it defaults to a daily sequence:
+
+```{r}
+date_seq(date_build(2019, 1), by = 2, total_size = 10)
+```
+
+You can generate a monthly sequence by supplying a month precision duration for `by`.
+
+```{r}
+date_seq(date_build(2019, 1), by = duration_months(2), total_size = 10)
+```
+
+If you supply `to`, be aware that all components of `to` that are more precise than the precision of `by` must match `from` exactly. For example, the day component of `from` and `to` doesn't match here, so the sequence isn't defined.
+
+```{r, error=TRUE}
+date_seq(
+  date_build(2019, 1, 1),
+  to = date_build(2019, 10, 2),
+  by = duration_months(2)
+)
+```
+
+`date_seq()` also catches invalid dates for you, forcing you to specify the `invalid` argument to specify how to handle them.
+
+```{r, error=TRUE}
+jan31 <- date_build(2019, 1, 31)
+dec31 <- date_build(2019, 12, 31)
+
+date_seq(jan31, to = dec31, by = duration_months(1))
+```
+
+By specifying `invalid = "previous"` here, we can generate month end values.
+
+```{r}
+date_seq(jan31, to = dec31, by = duration_months(1), invalid = "previous")
+```
+
+Compare this with the automatic "overflow" behavior of `seq()`, which is often a source of confusion.
+
+```{r}
+seq(jan31, to = dec31, by = "1 month")
+```
+
 ## Grouping by months or quarters
 
 When working on a data analysis, you might be required to summarize certain metrics at a monthly or quarterly level. With `calendar_group()`, you can easily summarize at the granular precision that you care about. Take this vector of day precision naive-times in 2019:
@@ -440,7 +487,7 @@ x <- naive_time_parse(x)
 x
 ```
 
-Next, we'll develop a function that attempts to turn this naive-time into a zoned-time, iterating through all of the time zone names available in the time zone database. These time zone names are accessible through `zone_database_names()`. By using the low-level `naive_time_info()`, rather than `as_zoned_time()`, to lookup zone specific information, we'll also get back information about the UTC offset and time zone abbreviation that is currently in use. By matching this abbreviation against our input abbreviation, we can generate a list of zoned-times that use the abbreviation we care about at that particular instance in time.
+Next, we'll develop a function that attempts to turn this naive-time into a zoned-time, iterating through all of the time zone names available in the time zone database. These time zone names are accessible through `tzdb_names()`. By using the low-level `naive_time_info()`, rather than `as_zoned_time()`, to lookup zone specific information, we'll also get back information about the UTC offset and time zone abbreviation that is currently in use. By matching this abbreviation against our input abbreviation, we can generate a list of zoned-times that use the abbreviation we care about at that particular instance in time.
 
 ```{r}
 naive_find_by_abbrev <- function(x, abbrev) {
@@ -454,7 +501,7 @@ naive_find_by_abbrev <- function(x, abbrev) {
     abort("`abbrev` must be a single string.")
   }
   
-  zones <- zone_database_names()
+  zones <- tzdb_names()
   info <- naive_time_info(x, zones)
   info$zones <- zones
   

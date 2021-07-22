@@ -152,6 +152,48 @@ test_that("can widen to day", {
 })
 
 # ------------------------------------------------------------------------------
+# calendar_start()
+
+test_that("can compute year start", {
+  x <- year_quarter_day(2019)
+  expect_identical(calendar_start(x, "year"), x)
+
+  x <- year_quarter_day(2019, 2, 2, 2, 2, 2, 2, subsecond_precision = "millisecond")
+  expect <- year_quarter_day(2019, 1, 1, 0, 0, 0, 0, subsecond_precision = "millisecond")
+  expect_identical(calendar_start(x, "year"), expect)
+})
+
+test_that("can compute quarter start", {
+  x <- year_quarter_day(2019, 2)
+  expect_identical(calendar_start(x, "quarter"), x)
+
+  x <- year_quarter_day(2019, 2, 2, 2, 2, 2, 2, subsecond_precision = "millisecond")
+  expect <- year_quarter_day(2019, 2, 1, 0, 0, 0, 0, subsecond_precision = "millisecond")
+  expect_identical(calendar_start(x, "quarter"), expect)
+})
+
+# ------------------------------------------------------------------------------
+# calendar_end()
+
+test_that("can compute year end", {
+  x <- year_quarter_day(2019)
+  expect_identical(calendar_end(x, "year"), x)
+
+  x <- year_quarter_day(2019, 2, 2, 2, 2, 2, 2, subsecond_precision = "millisecond")
+  expect <- year_quarter_day(2019, 4, 92, 23, 59, 59, 999L, subsecond_precision = "millisecond")
+  expect_identical(calendar_end(x, "year"), expect)
+})
+
+test_that("can compute quarter end", {
+  x <- year_quarter_day(2019, 2)
+  expect_identical(calendar_end(x, "quarter"), x)
+
+  x <- year_quarter_day(2019, 2:3, 2, 2, 2, 2, 2, subsecond_precision = "millisecond")
+  expect <- year_quarter_day(2019, 2:3, 91:92, 23, 59, 59, 999L, subsecond_precision = "millisecond")
+  expect_identical(calendar_end(x, "quarter"), expect)
+})
+
+# ------------------------------------------------------------------------------
 # seq()
 
 test_that("only granular precisions are allowed", {
@@ -252,4 +294,22 @@ test_that("can generate correct last days of the quarter with any `start`", {
 test_that("strict mode can be activated", {
   local_options(clock.strict = TRUE)
   expect_snapshot_error(invalid_resolve(year_quarter_day(2019, 1, 1)))
+})
+
+# ------------------------------------------------------------------------------
+# vec_math()
+
+test_that("is.nan() works", {
+  x <- year_quarter_day(c(2019, NA))
+  expect_identical(is.nan(x), c(FALSE, FALSE))
+})
+
+test_that("is.finite() works", {
+  x <- year_quarter_day(c(2019, NA))
+  expect_identical(is.finite(x), c(TRUE, FALSE))
+})
+
+test_that("is.infinite() works", {
+  x <- year_quarter_day(c(2019, NA))
+  expect_identical(is.infinite(x), c(FALSE, FALSE))
 })

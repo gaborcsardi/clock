@@ -254,6 +254,30 @@ test_that("can widen to subsecond precision", {
 })
 
 # ------------------------------------------------------------------------------
+# calendar_start()
+
+test_that("can compute year start", {
+  x <- year_day(2019)
+  expect_identical(calendar_start(x, "year"), x)
+
+  x <- year_day(2019, 2, 2, 2, 2, 2, subsecond_precision = "millisecond")
+  expect <- year_day(2019, 1, 0, 0, 0, 0, subsecond_precision = "millisecond")
+  expect_identical(calendar_start(x, "year"), expect)
+})
+
+# ------------------------------------------------------------------------------
+# calendar_end()
+
+test_that("can compute year end", {
+  x <- year_day(2019)
+  expect_identical(calendar_end(x, "year"), x)
+
+  x <- year_day(2019:2020, 2, 2, 2, 2, 2, subsecond_precision = "millisecond")
+  expect <- year_day(2019:2020, 365:366, 23, 59, 59, 999L, subsecond_precision = "millisecond")
+  expect_identical(calendar_end(x, "year"), expect)
+})
+
+# ------------------------------------------------------------------------------
 # calendar_leap_year()
 
 test_that("can detect leap years", {
@@ -310,4 +334,22 @@ test_that("strict mode can be activated", {
 test_that("throws known classed error", {
   expect_snapshot_error(invalid_resolve(year_day(2019, 366)))
   expect_error(invalid_resolve(year_day(2019, 366)), class = "clock_error_invalid_date")
+})
+
+# ------------------------------------------------------------------------------
+# vec_math()
+
+test_that("is.nan() works", {
+  x <- year_day(c(2019, NA))
+  expect_identical(is.nan(x), c(FALSE, FALSE))
+})
+
+test_that("is.finite() works", {
+  x <- year_day(c(2019, NA))
+  expect_identical(is.finite(x), c(TRUE, FALSE))
+})
+
+test_that("is.infinite() works", {
+  x <- year_day(c(2019, NA))
+  expect_identical(is.infinite(x), c(FALSE, FALSE))
 })

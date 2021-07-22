@@ -1,3 +1,20 @@
+# clock 0.4.0
+
+* New `date_start()` and `date_end()` for computing the date at the start or
+  end of a particular `precision`, such as the "end of the month" or
+  the "start of the year". These are powered by `calendar_start()` and
+  `calendar_end()`, which allow for even more flexible calendar-specific
+  boundary generation, such as the "last moment in the fiscal quarter" (#232).
+
+* New `invalid_remove()` for removing invalid dates. This is just a wrapper
+  around `x[!invalid_detect(x)]`, but works nicely with the pipe (#229).
+  
+* All clock types now support `is.nan()`, `is.finite()`, and `is.infinite()`.
+  Additionally, duration types now support `abs()` and `sign()` (#235).
+
+* tzdb 0.1.2 is now required, which fixes compilation issues on RHEL7/Centos
+  (#234).
+
 # clock 0.3.1
 
 * Parsing into a date-time type that is coarser than the original string is now

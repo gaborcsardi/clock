@@ -433,6 +433,48 @@ test_that("can widen to subsecond precision", {
 })
 
 # ------------------------------------------------------------------------------
+# calendar_start()
+
+test_that("can compute year start", {
+  x <- year_month_day(2019)
+  expect_identical(calendar_start(x, "year"), x)
+
+  x <- year_month_day(2019, 2, 2, 2, 2, 2, 2, subsecond_precision = "millisecond")
+  expect <- year_month_day(2019, 1, 1, 0, 0, 0, 0, subsecond_precision = "millisecond")
+  expect_identical(calendar_start(x, "year"), expect)
+})
+
+test_that("can compute month start", {
+  x <- year_month_day(2019, 2)
+  expect_identical(calendar_start(x, "month"), x)
+
+  x <- year_month_day(2019, 2, 2, 2, 2, 2, 2, subsecond_precision = "microsecond")
+  expect <- year_month_day(2019, 2, 1, 0, 0, 0, 0, subsecond_precision = "microsecond")
+  expect_identical(calendar_start(x, "month"), expect)
+})
+
+# ------------------------------------------------------------------------------
+# calendar_end()
+
+test_that("can compute year end", {
+  x <- year_month_day(2019)
+  expect_identical(calendar_end(x, "year"), x)
+
+  x <- year_month_day(2019, 2, 2, 2, 2, 2, 2, subsecond_precision = "millisecond")
+  expect <- year_month_day(2019, 12, 31, 23, 59, 59, 999L, subsecond_precision = "millisecond")
+  expect_identical(calendar_end(x, "year"), expect)
+})
+
+test_that("can compute month end", {
+  x <- year_month_day(2019, 2)
+  expect_identical(calendar_end(x, "month"), x)
+
+  x <- year_month_day(2019, 2:3, 2, 2, 2, 2, 2, subsecond_precision = "microsecond")
+  expect <- year_month_day(2019, 2:3, c(28, 31), 23, 59, 59, 999999L, subsecond_precision = "microsecond")
+  expect_identical(calendar_end(x, "month"), expect)
+})
+
+# ------------------------------------------------------------------------------
 # calendar_month_factor()
 
 test_that("can get a month factor", {
@@ -523,4 +565,22 @@ test_that("strict mode can be activated", {
 test_that("throws known classed error", {
   expect_snapshot_error(invalid_resolve(year_month_day(2019, 2, 31)))
   expect_error(invalid_resolve(year_month_day(2019, 2, 31)), class = "clock_error_invalid_date")
+})
+
+# ------------------------------------------------------------------------------
+# vec_math()
+
+test_that("is.nan() works", {
+  x <- year_month_day(c(2019, NA))
+  expect_identical(is.nan(x), c(FALSE, FALSE))
+})
+
+test_that("is.finite() works", {
+  x <- year_month_day(c(2019, NA))
+  expect_identical(is.finite(x), c(TRUE, FALSE))
+})
+
+test_that("is.infinite() works", {
+  x <- year_month_day(c(2019, NA))
+  expect_identical(is.infinite(x), c(FALSE, FALSE))
 })

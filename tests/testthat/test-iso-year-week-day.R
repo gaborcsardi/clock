@@ -150,6 +150,48 @@ test_that("can widen to day", {
 })
 
 # ------------------------------------------------------------------------------
+# calendar_start()
+
+test_that("can compute year start", {
+  x <- iso_year_week_day(2019)
+  expect_identical(calendar_start(x, "year"), x)
+
+  x <- iso_year_week_day(2019, 2, 2, 2, 2, 2, 2, subsecond_precision = "millisecond")
+  expect <- iso_year_week_day(2019, 1, 1, 0, 0, 0, 0, subsecond_precision = "millisecond")
+  expect_identical(calendar_start(x, "year"), expect)
+})
+
+test_that("can compute week start", {
+  x <- iso_year_week_day(2019, 2)
+  expect_identical(calendar_start(x, "week"), x)
+
+  x <- iso_year_week_day(2019, 2, 2, 2, 2, 2, 2, subsecond_precision = "millisecond")
+  expect <- iso_year_week_day(2019, 2, 1, 0, 0, 0, 0, subsecond_precision = "millisecond")
+  expect_identical(calendar_start(x, "week"), expect)
+})
+
+# ------------------------------------------------------------------------------
+# calendar_end()
+
+test_that("can compute year end", {
+  x <- iso_year_week_day(2019)
+  expect_identical(calendar_end(x, "year"), x)
+
+  x <- iso_year_week_day(2019:2020, 2, 2, 2, 2, 2, 2, subsecond_precision = "millisecond")
+  expect <- iso_year_week_day(2019:2020, 52:53, 7, 23, 59, 59, 999L, subsecond_precision = "millisecond")
+  expect_identical(calendar_end(x, "year"), expect)
+})
+
+test_that("can compute week end", {
+  x <- iso_year_week_day(2019, 2)
+  expect_identical(calendar_end(x, "week"), x)
+
+  x <- iso_year_week_day(2019, 2, 2, 2, 2, 2, 2, subsecond_precision = "millisecond")
+  expect <- iso_year_week_day(2019, 2, 7, 23, 59, 59, 999L, subsecond_precision = "millisecond")
+  expect_identical(calendar_end(x, "week"), expect)
+})
+
+# ------------------------------------------------------------------------------
 # seq()
 
 test_that("only year precision is allowed", {
@@ -180,4 +222,22 @@ test_that("seq(by, length.out) works", {
 test_that("strict mode can be activated", {
   local_options(clock.strict = TRUE)
   expect_snapshot_error(invalid_resolve(iso_year_week_day(2019, 1)))
+})
+
+# ------------------------------------------------------------------------------
+# vec_math()
+
+test_that("is.nan() works", {
+  x <- iso_year_week_day(c(2019, NA))
+  expect_identical(is.nan(x), c(FALSE, FALSE))
+})
+
+test_that("is.finite() works", {
+  x <- iso_year_week_day(c(2019, NA))
+  expect_identical(is.finite(x), c(TRUE, FALSE))
+})
+
+test_that("is.infinite() works", {
+  x <- iso_year_week_day(c(2019, NA))
+  expect_identical(is.infinite(x), c(FALSE, FALSE))
 })

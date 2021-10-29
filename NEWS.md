@@ -1,3 +1,60 @@
+# clock 0.5.0
+
+* New `date_time_parse_RFC_3339()` and `sys_time_parse_RFC_3339()` for parsing
+  date-time strings in the
+  [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339) format. This format
+  is a subset of ISO 8601 representing the most common date-time formats seen in
+  internet protocols, and is particularly useful for parsing date-time strings
+  returned by an API. The default format parses strings like
+  `"2019-01-01T01:02:03Z"` but can be adjusted to parse a numeric offset from
+  UTC with the `offset` argument, which can parse strings like
+  `"2019-01-01T01:02:03-04:30"` (#254).
+
+* To align more with RFC 3339 and ISO 8601 standards, the default formats used
+  in many of the date formatting and parsing functions have been slightly
+  altered. The following changes have been made:
+  
+  * Date-times (POSIXct):
+  
+    * `date_format()` now prints a `T` between the date and time.
+    
+    * `date_time_parse_complete()` now expects a `T` between the date and time
+      by default.
+  
+  * Sys-times:
+  
+    * `format()` and `as.character()` now print a `T` between the date and time.
+    
+    * `sys_time_parse()` now expects a `T` between the date and time by default.
+    
+  * Naive-times:
+  
+    * `format()` and `as.character()` now print a `T` between the date and time.
+    
+    * `naive_time_parse()` now expects a `T` between the date and time by
+      default.
+      
+  * Zoned-times:
+  
+    * `format()` and `as.character()` now print a `T` between the date and time.
+    
+    * `zoned_time_parse_complete()` now expects a `T` between the date and time
+      by default.
+      
+  * Calendars:
+  
+    * `format()` and `as.character()` now print a `T` between the date and time.
+    
+    * `year_month_day_parse()` now expects a `T` between the date and time by
+      default.
+
+* Further improved documentation of undefined behavior resulting from attempting
+  to parse sub-daily components of a string that is intended to be parsed into
+  a Date (#258).
+  
+* Bumped required minimum version of tzdb to 0.2.0 to get access to the latest
+  time zone database information (2021e) and to fix a Unicode bug on Windows.
+
 # clock 0.4.1
 
 * Updated a test related to upcoming changes in testthat.

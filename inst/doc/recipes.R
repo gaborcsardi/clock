@@ -11,12 +11,12 @@ library(magrittr)
 ## ---- eval=FALSE--------------------------------------------------------------
 #  zoned_time_now("")
 #  #> <zoned_time<nanosecond><America/New_York (current)>[1]>
-#  #> [1] "2021-02-10 15:54:29.875011000-05:00"
+#  #> [1] "2021-02-10T15:54:29.875011000-05:00"
 
 ## ---- eval=FALSE--------------------------------------------------------------
 #  zoned_time_now("Asia/Shanghai")
 #  #> <zoned_time<nanosecond><Asia/Shanghai>[1]>
-#  #> [1] "2021-02-11 04:54:29.875011000+08:00"
+#  #> [1] "2021-02-11T04:54:29.875011000+08:00"
 
 ## -----------------------------------------------------------------------------
 my_time <- year_month_day(2019, 1, 30, 9) %>%
@@ -285,7 +285,7 @@ zoned_time_parse_abbrev(x, "Asia/Kolkata")
 zoned_time_parse_abbrev(x, "Asia/Jerusalem")
 
 ## -----------------------------------------------------------------------------
-x <- naive_time_parse(x)
+x <- naive_time_parse(x, format = "%Y-%m-%d %H:%M:%S IST")
 x
 
 ## -----------------------------------------------------------------------------
@@ -351,7 +351,7 @@ as_zoned_time(x, "Europe/Dublin", ambiguous = "earliest")
 as_zoned_time(x, "Asia/Jerusalem", ambiguous = "latest")
 
 ## -----------------------------------------------------------------------------
-x <- zoned_time_parse_complete("2019-01-01 00:00:00-05:00[America/New_York]")
+x <- zoned_time_parse_complete("2019-01-01T00:00:00-05:00[America/New_York]")
 
 info <- sys_time_info(as_sys_time(x), zoned_time_zone(x))
 

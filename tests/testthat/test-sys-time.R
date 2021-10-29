@@ -84,7 +84,7 @@ test_that("as.character() works", {
   expect_identical(as.character(x), "2019-01-01")
 
   x <- as_sys_time(year_month_day(2019, 1, 1, 1, 1))
-  expect_identical(as.character(x), "2019-01-01 01:01")
+  expect_identical(as.character(x), "2019-01-01T01:01")
 })
 
 # ------------------------------------------------------------------------------
@@ -102,15 +102,15 @@ test_that("can parse day precision", {
 })
 
 test_that("%z shifts the result by the offset", {
-  x <- "2019-01-01 00:00:00+0100"
-  y <- "2019-01-01 00:00:00-0100"
+  x <- "2019-01-01T00:00:00+0100"
+  y <- "2019-01-01T00:00:00-0100"
 
   expect_identical(
-    sys_time_parse(x, format = "%Y-%m-%d %H:%M:%S%z"),
+    sys_time_parse(x, format = "%Y-%m-%dT%H:%M:%S%z"),
     as_sys_time(year_month_day(2018, 12, 31, 23, 0, 0))
   )
   expect_identical(
-    sys_time_parse(y, format = "%Y-%m-%d %H:%M:%S%z"),
+    sys_time_parse(y, format = "%Y-%m-%dT%H:%M:%S%z"),
     as_sys_time(year_month_day(2019, 1, 1, 1, 0, 0))
   )
 })
@@ -121,7 +121,86 @@ test_that("failure to parse throws a warning", {
 })
 
 # ------------------------------------------------------------------------------
+# sys_time_parse_RFC_3339()
+
+test_that("can parse default RFC 3339 format", {
+  x <- "2019-01-01T00:00:00Z"
+  expect_identical(
+    sys_time_parse_RFC_3339(x),
+    as_sys_time(year_month_day(2019, 1, 1, 0, 0, 0))
+  )
+})
+
+test_that("can parse with fractional seconds", {
+  x <- "2019-01-01T00:00:00.123Z"
+  expect_identical(
+    sys_time_parse_RFC_3339(x, precision = "millisecond"),
+    as_sys_time(year_month_day(2019, 1, 1, 0, 0, 0, 123, subsecond_precision = "millisecond"))
+  )
+})
+
+test_that("can parse with alternative separator", {
+  x <- "2019-01-01t00:00:00Z"
+  expect_identical(
+    sys_time_parse_RFC_3339(x, separator = "t"),
+    as_sys_time(year_month_day(2019, 1, 1, 0, 0, 0))
+  )
+
+  x <- "2019-01-01 00:00:00Z"
+  expect_identical(
+    sys_time_parse_RFC_3339(x, separator = " "),
+    as_sys_time(year_month_day(2019, 1, 1, 0, 0, 0))
+  )
+})
+
+test_that("can parse with alternative offset", {
+  x <- "2019-01-01T00:00:00z"
+  expect_identical(
+    sys_time_parse_RFC_3339(x, offset = "z"),
+    as_sys_time(year_month_day(2019, 1, 1, 0, 0, 0))
+  )
+
+  x <- "2019-01-01T00:00:00-0130"
+  expect_identical(
+    sys_time_parse_RFC_3339(x, offset = "%z"),
+    as_sys_time(year_month_day(2019, 1, 1, 1, 30, 0))
+  )
+
+  x <- "2019-01-01T00:00:00-01:30"
+  expect_identical(
+    sys_time_parse_RFC_3339(x, offset = "%Ez"),
+    as_sys_time(year_month_day(2019, 1, 1, 1, 30, 0))
+  )
+})
+
+test_that("`precision` must be at least second", {
+  x <- "2019-01-01T00:00:00Z"
+  expect_snapshot(error = TRUE, sys_time_parse_RFC_3339(x, precision = "day"))
+})
+
+test_that("`separator` is validated", {
+  x <- "2019-01-01T00:00:00Z"
+  expect_snapshot(error = TRUE, sys_time_parse_RFC_3339(x, separator = 1))
+  expect_snapshot(error = TRUE, sys_time_parse_RFC_3339(x, separator = "TT"))
+})
+
+test_that("`offset` is validated", {
+  x <- "2019-01-01T00:00:00Z"
+  expect_snapshot(error = TRUE, sys_time_parse_RFC_3339(x, offset = 1))
+  expect_snapshot(error = TRUE, sys_time_parse_RFC_3339(x, offset = "ZZ"))
+})
+
+test_that("sys-time-parse-RFC-3339: empty dots are checked", {
+  x <- "2019-01-01T00:00:00Z"
+  expect_snapshot(error = TRUE, sys_time_parse_RFC_3339(x, 1))
+})
+
+# ------------------------------------------------------------------------------
 # format()
+
+test_that("default format is correct", {
+  expect_snapshot(format(sys_seconds(0)))
+})
 
 test_that("allows `%z` and `%Z`", {
   x <- sys_seconds(0)

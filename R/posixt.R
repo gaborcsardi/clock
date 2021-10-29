@@ -967,10 +967,10 @@ date_month_factor.POSIXt <- function(x,
 #'
 #' `date_format()` formats a date-time (POSIXct) using a `format` string.
 #'
-#' If `format` is `NULL`, a default format of `"%Y-%m-%d %H:%M:%S%Ez[%Z]"` is
-#' used. This maximizes the chance for constructing a string that can be
-#' reproducibly parsed into a valid date-time using
-#' [date_time_parse_complete()].
+#' If `format` is `NULL`, a default format of `"%Y-%m-%dT%H:%M:%S%Ez[%Z]"` is
+#' used. This matches the default format that [date_time_parse_complete()]
+#' parses. Additionally, this format matches the de-facto standard extension to
+#' RFC 3339 for creating completely unambiguous date-times.
 #'
 #' @inheritParams ellipsis::dots_empty
 #' @inheritParams format.clock_zoned_time
@@ -992,6 +992,9 @@ date_month_factor.POSIXt <- function(x,
 #'
 #' # Default
 #' date_format(x)
+#'
+#' # Which is parseable by `date_time_parse_complete()`
+#' date_time_parse_complete(date_format(x))
 #'
 #' date_format(x, format = "%B %d, %Y %H:%M:%S")
 #'
@@ -1110,9 +1113,9 @@ date_set_zone.POSIXt <- function(x, zone) {
 #' Parsing: date-time
 #'
 #' @description
-#' There are three parsers for parsing strings into POSIXct date-times,
-#' `date_time_parse()`, `date_time_parse_complete()`, and
-#' `date_time_parse_abbrev()`.
+#' There are four parsers for parsing strings into POSIXct date-times,
+#' `date_time_parse()`, `date_time_parse_complete()`,
+#' `date_time_parse_abbrev()`, and `date_time_parse_RFC_3339()`.
 #'
 #' ## date_time_parse()
 #'
@@ -1128,19 +1131,23 @@ date_set_zone.POSIXt <- function(x, zone) {
 #' `date_time_parse()` completely ignores the `%z` and `%Z` commands. The only
 #' time zone specific information that is used is the `zone`.
 #'
-#' The default `format` used is `"%Y-%m-%d %H:%M:%S"`.
+#' The default `format` used is `"%Y-%m-%d %H:%M:%S"`. This matches the default
+#' result from calling `format()` on a POSIXct date-time.
 #'
 #' ## date_time_parse_complete()
 #'
 #' `date_time_parse_complete()` is a parser for _complete_ date-time strings,
-#' like `"2019-01-01 00:00:00-05:00[America/New_York]"`. A complete date-time
+#' like `"2019-01-01T00:00:00-05:00[America/New_York]"`. A complete date-time
 #' string has both the time zone offset and full time zone name in the string,
 #' which is the only way for the string itself to contain all of the information
-#' required to construct a zoned-time. Because of this,
+#' required to unambiguously construct a zoned-time. Because of this,
 #' `date_time_parse_complete()` requires both the `%z` and `%Z` commands to be
 #' supplied in the `format` string.
 #'
-#' The default `format` used is `"%Y-%m-%d %H:%M:%S%Ez[%Z]"`.
+#' The default `format` used is `"%Y-%m-%dT%H:%M:%S%Ez[%Z]"`. This matches the
+#' default result from calling `date_format()` on a POSIXct date-time.
+#' Additionally, this format matches the de-facto standard extension to RFC 3339
+#' for creating completely unambiguous date-times.
 #'
 #' ## date_time_parse_abbrev()
 #'
@@ -1157,7 +1164,41 @@ date_set_zone.POSIXt <- function(x, zone) {
 #' If used, the `%z` command must parse correctly, but its value will be
 #' completely ignored.
 #'
-#' The default `format` used is `"%Y-%m-%d %H:%M:%S %Z"`.
+#' The default `format` used is `"%Y-%m-%d %H:%M:%S %Z"`. This matches the
+#' default result from calling `print()` or `format(usetz = TRUE)` on a POSIXct
+#' date-time.
+#'
+#' ## date_time_parse_RFC_3339()
+#'
+#' `date_time_parse_RFC_3339()` is a parser for date-time strings in the
+#' extremely common date-time format outlined by [RFC
+#' 3339](https://datatracker.ietf.org/doc/html/rfc3339). This document outlines
+#' a profile of the ISO 8601 format that is even more restrictive, but
+#' corresponds to the most common formats that are likely to be used in
+#' internet protocols (i.e. through APIs).
+#'
+#' In particular, this function is intended to parse the following three
+#' formats:
+#'
+#' ```
+#' 2019-01-01T00:00:00Z
+#' 2019-01-01T00:00:00+0430
+#' 2019-01-01T00:00:00+04:30
+#' ```
+#'
+#' This function defaults to parsing the first of these formats by using
+#' a format string of `"%Y-%m-%dT%H:%M:%SZ"`.
+#'
+#' If your date-time strings use offsets from UTC rather than `"Z"`, then set
+#' `offset` to one of the following:
+#'
+#' - `"%z"` if the offset is of the form `"+0430"`.
+#' - `"%Ez"` if the offset is of the form `"+04:30"`.
+#'
+#' The RFC 3339 standard allows for replacing the `"T"` with a `"t"` or a space
+#' (`" "`). Set `separator` to adjust this as needed.
+#'
+#' The date-times returned by this function will always be in the UTC time zone.
 #'
 #' @details
 #' If `date_time_parse_complete()` is given input that is length zero, all
@@ -1177,6 +1218,7 @@ date_set_zone.POSIXt <- function(x, zone) {
 #'
 #' @inheritParams zoned-parsing
 #' @inheritParams as-zoned-time-naive-time
+#' @inheritParams sys-parsing
 #'
 #' @return A POSIXct.
 #'
@@ -1189,7 +1231,7 @@ date_set_zone.POSIXt <- function(x, zone) {
 #' # Same time as above, except this is a completely unambiguous parse that
 #' # doesn't require a `zone` argument, because the zone name and offset are
 #' # both present in the string
-#' date_time_parse_complete("2020-01-01 05:06:07-05:00[America/New_York]")
+#' date_time_parse_complete("2020-01-01T05:06:07-05:00[America/New_York]")
 #'
 #' # Only day components
 #' date_time_parse("2020-01-01", "America/New_York", format = "%Y-%m-%d")
@@ -1216,8 +1258,8 @@ date_set_zone.POSIXt <- function(x, zone) {
 #' # that the offset and zone name are both in the string, which resolves
 #' # the ambiguity
 #' complete_times <- c(
-#'   "1970-10-25 01:00:00-04:00[America/New_York]",
-#'   "1970-10-25 01:00:00-05:00[America/New_York]"
+#'   "1970-10-25T01:00:00-04:00[America/New_York]",
+#'   "1970-10-25T01:00:00-05:00[America/New_York]"
 #' )
 #' date_time_parse_complete(complete_times)
 #'
@@ -1230,13 +1272,28 @@ date_set_zone.POSIXt <- function(x, zone) {
 #' date_time_parse_abbrev(abbrev_times, "America/New_York")
 #'
 #' # ---------------------------------------------------------------------------
+#' # RFC 3339
+#'
+#' # Typical UTC format
+#' x <- "2019-01-01T00:01:02Z"
+#' date_time_parse_RFC_3339(x)
+#'
+#' # With a UTC offset containing a `:`
+#' x <- "2019-01-01T00:01:02+02:30"
+#' date_time_parse_RFC_3339(x, offset = "%Ez")
+#'
+#' # With a space between the date and time and no `:` in the offset
+#' x <- "2019-01-01 00:01:02+0230"
+#' date_time_parse_RFC_3339(x, separator = " ", offset = "%z")
+#'
+#' # ---------------------------------------------------------------------------
 #' # Sub-second components
 #'
 #' # If you have a string with sub-second components, but only require up to
 #' # seconds, first parse them into a clock type that can handle sub-seconds to
 #' # fully capture that information, then round using whatever convention is
 #' # required for your use case before converting to a date-time.
-#' x <- c("2019-01-01 00:00:01.1", "2019-01-01 00:00:01.78")
+#' x <- c("2019-01-01T00:00:01.1", "2019-01-01T00:00:01.78")
 #'
 #' x <- naive_time_parse(x, precision = "millisecond")
 #' x
@@ -1256,6 +1313,13 @@ date_time_parse <- function(x,
                             locale = clock_locale(),
                             nonexistent = NULL,
                             ambiguous = NULL) {
+  if (is_null(format)) {
+    # Default format for `date_time_parse()` doesn't have the `T`, unlike
+    # default format for `naive_time_parse()`. This is intended to parse the
+    # format returned by `format(<POSIXct>)` by default.
+    format <- "%Y-%m-%d %H:%M:%S"
+  }
+
   x <- naive_time_parse(x, ..., format = format, precision = "second", locale = locale)
   as.POSIXct(x, tz = zone, nonexistent = nonexistent, ambiguous = ambiguous)
 }
@@ -1272,6 +1336,20 @@ date_time_parse_complete <- function(x, ..., format = NULL, locale = clock_local
 date_time_parse_abbrev <- function(x, zone, ..., format = NULL, locale = clock_locale()) {
   x <- zoned_time_parse_abbrev(x, zone, ..., format = format, precision = "second", locale = locale)
   as.POSIXct(x)
+}
+
+#' @rdname date-time-parse
+#' @export
+date_time_parse_RFC_3339 <- function(x,
+                                     ...,
+                                     separator = "T",
+                                     offset = "Z") {
+  x <- sys_time_parse_RFC_3339(x, ..., separator = separator, offset = offset, precision = "second")
+  # Hard-code UTC because we don't allow optional `zone` arguments that have a
+  # default anywhere else in the package. It seems like it would be bad practice
+  # to have one here, since parsed RFC 3339 strings should probably always be
+  # interpreted as UTC.
+  as.POSIXct(x, tz = "UTC")
 }
 
 # ------------------------------------------------------------------------------

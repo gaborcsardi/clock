@@ -41,17 +41,22 @@ is_sys_time <- function(x) {
 #' Parsing: sys-time
 #'
 #' @description
-#' `sys_time_parse()` is a parser into a sys-time.
+#' There are two parsers into a sys-time, `sys_time_parse()` and
+#' `sys_time_parse_RFC_3339()`.
 #'
-#' `sys_time_parse()` is useful when you have date-time strings like:
-#' `"2020-01-01 01:04:30-0400"`. If there is an attached UTC offset, but no time
-#' zone name, then parsing this string as a sys-time using the `%z` command to
-#' capture the offset is probably your best option. If you know that this string
-#' should be interpreted in a specific time zone, parse as a sys-time to get the
-#' UTC equivalent, then use [as_zoned_time()].
+#' ## sys_time_parse()
+#'
+#' `sys_time_parse()` is useful when you have date-time strings like
+#' `"2020-01-01T01:04:30"` that you know should be interpreted as UTC, or like
+#' `"2020-01-01T01:04:30-04:00"` with a UTC offset but no zone name. If you find
+#' yourself in the latter situation, then parsing this string as a sys-time
+#' using the `%Ez` command to capture the offset is probably your best option.
+#' If you know that this string should be interpreted in a specific time zone,
+#' parse as a sys-time to get the UTC equivalent, then use [as_zoned_time()].
 #'
 #' The default options assume that `x` should be parsed at second precision,
-#' using a `format` string of `"%Y-%m-%d %H:%M:%S"`.
+#' using a `format` string of `"%Y-%m-%dT%H:%M:%S"`. This matches the default
+#' result from calling `format()` on a sys-time.
 #'
 #' `sys_time_parse()` is nearly equivalent to [naive_time_parse()], except for
 #' the fact that the `%z` command is actually used. Using `%z` assumes that the
@@ -61,13 +66,45 @@ is_sys_time <- function(x) {
 #'
 #' _`sys_time_parse()` ignores the `%Z` command._
 #'
+#' ## sys_time_parse_RFC_3339()
+#'
+#' `sys_time_parse_RFC_3339()` is a wrapper around `sys_time_parse()` that is
+#' intended to parse the extremely common date-time format outlined by
+#' [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339). This document
+#' outlines a profile of the ISO 8601 format that is even more restrictive.
+#'
+#' In particular, this function is intended to parse the following three
+#' formats:
+#'
+#' ```
+#' 2019-01-01T00:00:00Z
+#' 2019-01-01T00:00:00+0430
+#' 2019-01-01T00:00:00+04:30
+#' ```
+#'
+#' This function defaults to parsing the first of these formats by using
+#' a format string of `"%Y-%m-%dT%H:%M:%SZ"`.
+#'
+#' If your date-time strings use offsets from UTC rather than `"Z"`, then set
+#' `offset` to one of the following:
+#'
+#' - `"%z"` if the offset is of the form `"+0430"`.
+#' - `"%Ez"` if the offset is of the form `"+04:30"`.
+#'
+#' The RFC 3339 standard allows for replacing the `"T"` with a `"t"` or a space
+#' (`" "`). Set `separator` to adjust this as needed.
+#'
+#' For this function, the `precision` must be at least `"second"`.
+#'
+#' @details
 #' If your date-time strings contain a full time zone name and a UTC offset, use
 #' [zoned_time_parse_complete()]. If they contain a time zone abbreviation, use
 #' [zoned_time_parse_abbrev()].
 #'
-#' If your date-time strings don't contain an offset from UTC, you might
-#' consider using [naive_time_parse()], since the resulting naive-time doesn't
-#' come with an assumption of a UTC time zone.
+#' If your date-time strings don't contain an offset from UTC and you aren't
+#' sure if they should be treated as UTC or not, you might consider using
+#' [naive_time_parse()], since the resulting naive-time doesn't come with an
+#' assumption of a UTC time zone.
 #'
 #' @inheritSection zoned-parsing Full Precision Parsing
 #'
@@ -94,11 +131,34 @@ is_sys_time <- function(x) {
 #'   Setting the `precision` determines how much information `%S` attempts
 #'   to parse.
 #'
+#' @param separator `[character(1)]`
+#'
+#'   The separator between the date and time components of the string. One of:
+#'
+#'   - `"T"`
+#'
+#'   - `"t"`
+#'
+#'   - `" "`
+#'
+#' @param offset `[character(1)]`
+#'
+#'   The format of the offset from UTC contained in the string. One of:
+#'
+#'   - `"Z"`
+#'
+#'   - `"z"`
+#'
+#'   - `"%z"` to parse a numeric offset of the form `"+0430"`
+#'
+#'   - `"%Ez"` to parse a numeric offset of the form `"+04:30"`
+#'
 #' @return A sys-time.
 #'
-#' @export
+#' @name sys-parsing
+#'
 #' @examples
-#' sys_time_parse("2020-01-01 05:06:07")
+#' sys_time_parse("2020-01-01T05:06:07")
 #'
 #' # Day precision
 #' sys_time_parse("2020-01-01", precision = "day")
@@ -122,6 +182,25 @@ is_sys_time <- function(x) {
 #'
 #' # Remember that the `%Z` command is ignored entirely!
 #' sys_time_parse("2020-01-01 America/New_York", format = "%Y-%m-%d %Z")
+#'
+#' # ---------------------------------------------------------------------------
+#' # RFC 3339
+#'
+#' # Typical UTC format
+#' x <- "2019-01-01T00:01:02Z"
+#' sys_time_parse_RFC_3339(x)
+#'
+#' # With a UTC offset containing a `:`
+#' x <- "2019-01-01T00:01:02+02:30"
+#' sys_time_parse_RFC_3339(x, offset = "%Ez")
+#'
+#' # With a space between the date and time and no `:` in the offset
+#' x <- "2019-01-01 00:01:02+0230"
+#' sys_time_parse_RFC_3339(x, separator = " ", offset = "%z")
+NULL
+
+#' @rdname sys-parsing
+#' @export
 sys_time_parse <- function(x,
                            ...,
                            format = NULL,
@@ -139,6 +218,37 @@ sys_time_parse <- function(x,
   )
 
   new_sys_time_from_fields(fields, precision, names(x))
+}
+
+#' @rdname sys-parsing
+#' @export
+sys_time_parse_RFC_3339 <- function(x,
+                                    ...,
+                                    separator = "T",
+                                    offset = "Z",
+                                    precision = "second") {
+  separator <- arg_match0(separator, values = c("T", "t", " "), arg_nm = "separator")
+  offset <- arg_match0(offset, values = c("Z", "z", "%z", "%Ez"), arg_nm = "offset")
+
+  format <- paste0("%Y-%m-%d", separator, "%H:%M:%S", offset)
+
+  # Only used for error checking
+  validate_RFC_3339_precision_string(precision)
+
+  sys_time_parse(x, ..., format = format, precision = precision)
+}
+
+validate_RFC_3339_precision_string <- function(precision) {
+  precision <- validate_precision_string(precision)
+
+  if (!is_valid_RFC_3339_precision(precision)) {
+    abort("`precision` must be at least 'second' precision.")
+  }
+
+  precision
+}
+is_valid_RFC_3339_precision <- function(precision) {
+  precision >= PRECISION_SECOND
 }
 
 # ------------------------------------------------------------------------------

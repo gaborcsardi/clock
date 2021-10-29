@@ -151,14 +151,14 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>Using <code>&quot;&quot;</code> as the time zone string will try and use whatever R thinks your local time zone is (i.e. from <code>Sys.timezone()</code>).</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">zoned_time_now</span>(<span class="st">&quot;&quot;</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;nanosecond&gt;&lt;America/New_York (current)&gt;[1]&gt;</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2021-02-10 15:54:29.875011000-05:00&quot;</span></span></code></pre></div>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2021-02-10T15:54:29.875011000-05:00&quot;</span></span></code></pre></div>
 </div>
 <div id="the-current-time-somewhere-else" class="section level2">
 <h2>The current time somewhere else</h2>
 <p>Pass a time zone name to <code>zoned_time_now()</code> to get the current time somewhere else.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">zoned_time_now</span>(<span class="st">&quot;Asia/Shanghai&quot;</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;nanosecond&gt;&lt;Asia/Shanghai&gt;[1]&gt;</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2021-02-11 04:54:29.875011000+08:00&quot;</span></span></code></pre></div>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2021-02-11T04:54:29.875011000+08:00&quot;</span></span></code></pre></div>
 </div>
 <div id="set-a-meeting-across-time-zones" class="section level2">
 <h2>Set a meeting across time zones</h2>
@@ -169,13 +169,13 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>my_time</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;America/New_York&gt;[1]&gt;</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-30 09:00:00-05:00&quot;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-30T09:00:00-05:00&quot;</span></span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>their_time <span class="ot">&lt;-</span> <span class="fu">zoned_time_set_zone</span>(my_time, <span class="st">&quot;Asia/Shanghai&quot;</span>)</span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>their_time</span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Asia/Shanghai&gt;[1]&gt;</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-30 22:00:00+08:00&quot;</span></span></code></pre></div>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-30T22:00:00+08:00&quot;</span></span></code></pre></div>
 <div id="high-level-api" class="section level3">
 <h3>High level API</h3>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>my_time <span class="ot">&lt;-</span> <span class="fu">as.POSIXct</span>(<span class="st">&quot;2019-01-30 09:00:00&quot;</span>, <span class="st">&quot;America/New_York&quot;</span>)</span>
@@ -194,13 +194,13 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>my_time</span>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;America/New_York&gt;[1]&gt;</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-30 09:00:00-05:00&quot;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-30T09:00:00-05:00&quot;</span></span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Drop the time zone information, retaining the printed time</span></span>
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>my_time <span class="sc">%&gt;%</span></span>
 <span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_naive_time</span>()</span>
 <span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;time_point&lt;naive&gt;&lt;second&gt;[1]&gt;</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-30 09:00:00&quot;</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-30T09:00:00&quot;</span></span>
 <span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Add the correct time zone name back on,</span></span>
 <span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co"># again retaining the printed time</span></span>
@@ -210,12 +210,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>their_9am</span>
 <span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Asia/Shanghai&gt;[1]&gt;</span></span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-30 09:00:00+08:00&quot;</span></span></code></pre></div>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-30T09:00:00+08:00&quot;</span></span></code></pre></div>
 <p>Note that a conversion like this isn’t always possible due to daylight saving time issues, in which case you might need to set the <code>nonexistent</code> and <code>ambiguous</code> arguments of <code>as_zoned_time()</code>.</p>
 <p>What time would this have been for you in New York?</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">zoned_time_set_zone</span>(their_9am, <span class="st">&quot;America/New_York&quot;</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;America/New_York&gt;[1]&gt;</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-29 20:00:00-05:00&quot;</span></span></code></pre></div>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-29T20:00:00-05:00&quot;</span></span></code></pre></div>
 <div id="high-level-api-1" class="section level3">
 <h3>High level API</h3>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>my_time <span class="ot">&lt;-</span> <span class="fu">as.POSIXct</span>(<span class="st">&quot;2019-01-30 09:00:00&quot;</span>, <span class="st">&quot;America/New_York&quot;</span>)</span>
@@ -354,9 +354,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="fu">seq</span>(from, to, <span class="at">by =</span> <span class="fu">duration_minutes</span>(<span class="dv">90</span>))</span>
 <span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;time_point&lt;naive&gt;&lt;second&gt;[7]&gt;</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-01 02:30:00&quot; &quot;2019-01-01 04:00:00&quot; &quot;2019-01-01 05:30:00&quot;</span></span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [4] &quot;2019-01-01 07:00:00&quot; &quot;2019-01-01 08:30:00&quot; &quot;2019-01-01 10:00:00&quot;</span></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [7] &quot;2019-01-01 11:30:00&quot;</span></span></code></pre></div>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-01-01T02:30:00&quot; &quot;2019-01-01T04:00:00&quot; &quot;2019-01-01T05:30:00&quot;</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [4] &quot;2019-01-01T07:00:00&quot; &quot;2019-01-01T08:30:00&quot; &quot;2019-01-01T10:00:00&quot;</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [7] &quot;2019-01-01T11:30:00&quot;</span></span></code></pre></div>
 <div id="high-level-api-3" class="section level3">
 <h3>High level API</h3>
 <p>In the high level API, you can use <code>date_seq()</code> to generate sequences. This doesn’t have all of the flexibility of the <code>seq()</code> methods above, but is still extremely useful and has the added benefit of switching between calendars, sys-times, and naive-times automatically for you.</p>
@@ -583,16 +583,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="fu">zoned_time_parse_abbrev</span>(x, <span class="st">&quot;Asia/Kolkata&quot;</span>)</span>
 <span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Asia/Kolkata&gt;[1]&gt;</span></span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25 01:30:00+05:30&quot;</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25T01:30:00+05:30&quot;</span></span>
 <span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a><span class="fu">zoned_time_parse_abbrev</span>(x, <span class="st">&quot;Asia/Jerusalem&quot;</span>)</span>
 <span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Asia/Jerusalem&gt;[1]&gt;</span></span>
-<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25 01:30:00+02:00&quot;</span></span></code></pre></div>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25T01:30:00+02:00&quot;</span></span></code></pre></div>
 <p>If you <em>don’t</em> know what time zone this abbreviation goes with, then generally you are out of luck. However, there are low-level tools in this library that can help you generate a list of <em>possible</em> zoned-times this could map to.</p>
 <p>Assuming that <code>x</code> is a naive-time with its corresponding time zone abbreviation attached, the first thing to do is to parse this string as a naive-time.</p>
-<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">naive_time_parse</span>(x)</span>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">naive_time_parse</span>(x, <span class="at">format =</span> <span class="st">&quot;%Y-%m-%d %H:%M:%S IST&quot;</span>)</span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>x</span>
 <span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;time_point&lt;naive&gt;&lt;second&gt;[1]&gt;</span></span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25 01:30:00&quot;</span></span></code></pre></div>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25T01:30:00&quot;</span></span></code></pre></div>
 <p>Next, we’ll develop a function that attempts to turn this naive-time into a zoned-time, iterating through all of the time zone names available in the time zone database. These time zone names are accessible through <code>tzdb_names()</code>. By using the low-level <code>naive_time_info()</code>, rather than <code>as_zoned_time()</code>, to lookup zone specific information, we’ll also get back information about the UTC offset and time zone abbreviation that is currently in use. By matching this abbreviation against our input abbreviation, we can generate a list of zoned-times that use the abbreviation we care about at that particular instance in time.</p>
 <div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>naive_find_by_abbrev <span class="ot">&lt;-</span> <span class="cf">function</span>(x, abbrev) {</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is_naive_time</span>(x)) {</span>
@@ -649,31 +649,31 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>candidates</span>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[1]]</span></span>
 <span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Asia/Calcutta&gt;[1]&gt;</span></span>
-<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25 01:30:00+05:30&quot;</span></span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25T01:30:00+05:30&quot;</span></span>
 <span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[2]]</span></span>
 <span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Asia/Kolkata&gt;[1]&gt;</span></span>
-<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25 01:30:00+05:30&quot;</span></span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25T01:30:00+05:30&quot;</span></span>
 <span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[3]]</span></span>
 <span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Eire&gt;[1]&gt;</span></span>
-<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25 01:30:00+01:00&quot;</span></span>
+<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25T01:30:00+01:00&quot;</span></span>
 <span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[4]]</span></span>
 <span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Europe/Dublin&gt;[1]&gt;</span></span>
-<span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25 01:30:00+01:00&quot;</span></span>
+<span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25T01:30:00+01:00&quot;</span></span>
 <span id="cb47-18"><a href="#cb47-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb47-19"><a href="#cb47-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[5]]</span></span>
 <span id="cb47-20"><a href="#cb47-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Asia/Jerusalem&gt;[1]&gt;</span></span>
-<span id="cb47-21"><a href="#cb47-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25 01:30:00+02:00&quot;</span></span>
+<span id="cb47-21"><a href="#cb47-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25T01:30:00+02:00&quot;</span></span>
 <span id="cb47-22"><a href="#cb47-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb47-23"><a href="#cb47-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[6]]</span></span>
 <span id="cb47-24"><a href="#cb47-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Asia/Tel_Aviv&gt;[1]&gt;</span></span>
-<span id="cb47-25"><a href="#cb47-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25 01:30:00+02:00&quot;</span></span>
+<span id="cb47-25"><a href="#cb47-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25T01:30:00+02:00&quot;</span></span>
 <span id="cb47-26"><a href="#cb47-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb47-27"><a href="#cb47-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [[7]]</span></span>
 <span id="cb47-28"><a href="#cb47-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Israel&gt;[1]&gt;</span></span>
-<span id="cb47-29"><a href="#cb47-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25 01:30:00+02:00&quot;</span></span></code></pre></div>
+<span id="cb47-29"><a href="#cb47-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25T01:30:00+02:00&quot;</span></span></code></pre></div>
 <p>While it looks like we got 7 candidates, in reality we only have 3. Asia/Kolkata, Europe/Dublin, and Asia/Jerusalem are our 3 candidates. The others are aliases of those 3 that have been retired but are kept for backwards compatibility.</p>
 <p>Looking at the code, there are two ways to add a candidate time zone name to the list.</p>
 <p>If there is a unique mapping from <code>{naive-time, zone}</code> to <code>sys-time</code>, then we check if the abbreviation that goes with that unique mapping matches our input abbreviation. If so, then we convert <code>x</code> to a zoned-time with that time zone.</p>
@@ -681,37 +681,37 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>This example is particularly interesting, since each of the 3 candidates came from a different path. The Asia/Kolkata one is unique, the Europe/Dublin one is ambiguous but the earliest was chosen, and the Asia/Jerusalem one is ambiguous but the latest was chosen:</p>
 <div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_zoned_time</span>(x, <span class="st">&quot;Asia/Kolkata&quot;</span>)</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Asia/Kolkata&gt;[1]&gt;</span></span>
-<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25 01:30:00+05:30&quot;</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25T01:30:00+05:30&quot;</span></span>
 <span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a><span class="fu">as_zoned_time</span>(x, <span class="st">&quot;Europe/Dublin&quot;</span>, <span class="at">ambiguous =</span> <span class="st">&quot;earliest&quot;</span>)</span>
 <span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Europe/Dublin&gt;[1]&gt;</span></span>
-<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25 01:30:00+01:00&quot;</span></span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25T01:30:00+01:00&quot;</span></span>
 <span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a><span class="fu">as_zoned_time</span>(x, <span class="st">&quot;Asia/Jerusalem&quot;</span>, <span class="at">ambiguous =</span> <span class="st">&quot;latest&quot;</span>)</span>
 <span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;Asia/Jerusalem&gt;[1]&gt;</span></span>
-<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25 01:30:00+02:00&quot;</span></span></code></pre></div>
+<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2020-10-25T01:30:00+02:00&quot;</span></span></code></pre></div>
 </div>
 <div id="when-is-the-next-daylight-saving-time-event" class="section level2">
 <h2>When is the next daylight saving time event?</h2>
 <p>Given a particular zoned-time, when will it next be affected by daylight saving time? For this, we can use a relatively low level helper, <code>sys_time_info()</code>. It returns a data frame of information about the current daylight saving time transition points, along with information about the offset, the current time zone abbreviation, and whether or not daylight saving time is currently active or not.</p>
-<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">zoned_time_parse_complete</span>(<span class="st">&quot;2019-01-01 00:00:00-05:00[America/New_York]&quot;</span>)</span>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">zoned_time_parse_complete</span>(<span class="st">&quot;2019-01-01T00:00:00-05:00[America/New_York]&quot;</span>)</span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>info <span class="ot">&lt;-</span> <span class="fu">sys_time_info</span>(<span class="fu">as_sys_time</span>(x), <span class="fu">zoned_time_zone</span>(x))</span>
 <span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Beginning of the current DST range</span></span>
 <span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a><span class="fu">as_zoned_time</span>(info<span class="sc">$</span>begin, <span class="fu">zoned_time_zone</span>(x))</span>
 <span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;America/New_York&gt;[1]&gt;</span></span>
-<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2018-11-04 01:00:00-05:00&quot;</span></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2018-11-04T01:00:00-05:00&quot;</span></span>
 <span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Beginning of the next DST range</span></span>
 <span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a><span class="fu">as_zoned_time</span>(info<span class="sc">$</span>end, <span class="fu">zoned_time_zone</span>(x))</span>
 <span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;America/New_York&gt;[1]&gt;</span></span>
-<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-03-10 03:00:00-04:00&quot;</span></span></code></pre></div>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-03-10T03:00:00-04:00&quot;</span></span></code></pre></div>
 <p>So on 2018-11-04 at (the second) 1 o’clock hour, daylight saving time was turned off. On 2019-03-10 at 3 o’clock, daylight saving time will be considered on again. This is the next moment in time right after a daylight saving time gap of 1 hour, which you can see by subtracting 1 second (in sys-time):</p>
 <div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Last moment in time in the current DST range</span></span>
 <span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>info<span class="sc">$</span>end <span class="sc">%&gt;%</span></span>
 <span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">add_seconds</span>(<span class="sc">-</span><span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_zoned_time</span>(<span class="fu">zoned_time_zone</span>(x))</span>
 <span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; &lt;zoned_time&lt;second&gt;&lt;America/New_York&gt;[1]&gt;</span></span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-03-10 01:59:59-05:00&quot;</span></span></code></pre></div>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;2019-03-10T01:59:59-05:00&quot;</span></span></code></pre></div>
 </div>
 
 

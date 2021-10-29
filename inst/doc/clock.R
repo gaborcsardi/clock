@@ -73,7 +73,7 @@ date_time_parse("2020-11-01 01:30:00", zone, ambiguous = "earliest")
 date_time_parse("2020-11-01 01:30:00", zone, ambiguous = "latest")
 
 ## -----------------------------------------------------------------------------
-x <- "2020-01-01 01:02:03-05:00[America/New_York]"
+x <- "2020-01-01T01:02:03-05:00[America/New_York]"
 
 date_time_parse_complete(x)
 
@@ -98,6 +98,20 @@ date_time_parse_abbrev(x, "Asia/Kolkata")
 
 # IST = Israel Standard Time
 date_time_parse_abbrev(x, "Asia/Jerusalem")
+
+## -----------------------------------------------------------------------------
+x <- "2020-01-01T01:02:03Z"
+
+date_time_parse_RFC_3339(x)
+
+## -----------------------------------------------------------------------------
+x <- "2020-01-01T01:02:03-0500"
+
+date_time_parse_RFC_3339(x, offset = "%z")
+
+x <- "2020-01-01T01:02:03-05:00"
+
+date_time_parse_RFC_3339(x, offset = "%Ez")
 
 ## -----------------------------------------------------------------------------
 x <- seq(date_build(2019, 1, 20), date_build(2019, 2, 5), by = 1)

@@ -187,17 +187,32 @@ A Date.
 \description{
 \code{date_parse()} parses strings into a Date.
 
-The default \code{format} used is \code{"\%Y-\%m-\%d"}.
+The default \code{format} used is \code{"\%Y-\%m-\%d"}. This matches the default
+result from calling \code{print()} or \code{format()} on a Date.
 }
 \details{
 \emph{\code{date_parse()} ignores both the \verb{\%z} and \verb{\%Z} commands,} as clock treats
 Date as a \emph{naive} type, with a yet-to-be-specified time zone.
 
 Parsing strings with sub-daily components, such as hours, minutes, or
-seconds, should be done with \code{\link[=date_time_parse]{date_time_parse()}}. If you only need the date
-components, round the result to day precision, and then use \code{\link[=as_date]{as_date()}}.
-Attempting to directly parse a sub-daily string into a Date is ambiguous and
-undefined, and is unlikely to work as you might expect.
+seconds, should generally be done with \code{\link[=date_time_parse]{date_time_parse()}}. If you only
+need the date components from a string with sub-daily components, choose
+one of the following:
+\itemize{
+\item If the date components are at the front of the string, and you don't want
+the time components to affect the date in any way, you can use
+\code{\link[=date_parse]{date_parse()}} to parse only the date components. For example,
+\code{date_parse("2019-01-05 00:01:02", format = "\%Y-\%m-\%d")} will parse
+through \code{05} and then stop.
+\item If you want the time components to influence the date, then parse the full
+string with \code{\link[=date_time_parse]{date_time_parse()}}, round to day precision with a
+rounding function like \code{\link[=date_round]{date_round()}}, and cast to date with \code{\link[=as_date]{as_date()}}.
+}
+
+Attempting to directly parse all components of a sub-daily string into a
+Date is ambiguous and undefined, and is unlikely to work as you might expect.
+For example, \code{date_parse("2019-01-05 00:01:02", format = "\%Y-\%m-\%d \%H:\%M:\%S")} is not officially supported, even if it works in
+some cases.
 }
 \examples{
 date_parse("2020-01-01")

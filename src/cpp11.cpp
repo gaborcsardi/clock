@@ -62,10 +62,24 @@ extern "C" SEXP _clock_duration_modulus_cpp(SEXP x, SEXP y, SEXP precision_int) 
   END_CPP11
 }
 // duration.cpp
+cpp11::writable::integers duration_integer_divide_cpp(cpp11::list_of<cpp11::integers> x, cpp11::list_of<cpp11::integers> y, const cpp11::integers& precision_int);
+extern "C" SEXP _clock_duration_integer_divide_cpp(SEXP x, SEXP y, SEXP precision_int) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(duration_integer_divide_cpp(cpp11::as_cpp<cpp11::decay_t<cpp11::list_of<cpp11::integers>>>(x), cpp11::as_cpp<cpp11::decay_t<cpp11::list_of<cpp11::integers>>>(y), cpp11::as_cpp<cpp11::decay_t<const cpp11::integers&>>(precision_int)));
+  END_CPP11
+}
+// duration.cpp
 cpp11::writable::list duration_scalar_multiply_cpp(cpp11::list_of<cpp11::integers> x, const cpp11::integers& y, const cpp11::integers& precision_int);
 extern "C" SEXP _clock_duration_scalar_multiply_cpp(SEXP x, SEXP y, SEXP precision_int) {
   BEGIN_CPP11
     return cpp11::as_sexp(duration_scalar_multiply_cpp(cpp11::as_cpp<cpp11::decay_t<cpp11::list_of<cpp11::integers>>>(x), cpp11::as_cpp<cpp11::decay_t<const cpp11::integers&>>(y), cpp11::as_cpp<cpp11::decay_t<const cpp11::integers&>>(precision_int)));
+  END_CPP11
+}
+// duration.cpp
+cpp11::writable::list duration_scalar_modulus_cpp(cpp11::list_of<cpp11::integers> x, const cpp11::integers& y, const cpp11::integers& precision_int);
+extern "C" SEXP _clock_duration_scalar_modulus_cpp(SEXP x, SEXP y, SEXP precision_int) {
+  BEGIN_CPP11
+    return cpp11::as_sexp(duration_scalar_modulus_cpp(cpp11::as_cpp<cpp11::decay_t<cpp11::list_of<cpp11::integers>>>(x), cpp11::as_cpp<cpp11::decay_t<const cpp11::integers&>>(y), cpp11::as_cpp<cpp11::decay_t<const cpp11::integers&>>(precision_int)));
   END_CPP11
 }
 // duration.cpp
@@ -906,6 +920,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_clock_duration_floor_cpp",                                   (DL_FUNC) &_clock_duration_floor_cpp,                                    4},
     {"_clock_duration_has_common_precision_cpp",                    (DL_FUNC) &_clock_duration_has_common_precision_cpp,                     2},
     {"_clock_duration_helper_cpp",                                  (DL_FUNC) &_clock_duration_helper_cpp,                                   2},
+    {"_clock_duration_integer_divide_cpp",                          (DL_FUNC) &_clock_duration_integer_divide_cpp,                           3},
     {"_clock_duration_minus_cpp",                                   (DL_FUNC) &_clock_duration_minus_cpp,                                    3},
     {"_clock_duration_modulus_cpp",                                 (DL_FUNC) &_clock_duration_modulus_cpp,                                  3},
     {"_clock_duration_plus_cpp",                                    (DL_FUNC) &_clock_duration_plus_cpp,                                     3},
@@ -913,6 +928,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_clock_duration_restore",                                     (DL_FUNC) &_clock_duration_restore,                                      2},
     {"_clock_duration_round_cpp",                                   (DL_FUNC) &_clock_duration_round_cpp,                                    4},
     {"_clock_duration_scalar_divide_cpp",                           (DL_FUNC) &_clock_duration_scalar_divide_cpp,                            3},
+    {"_clock_duration_scalar_modulus_cpp",                          (DL_FUNC) &_clock_duration_scalar_modulus_cpp,                           3},
     {"_clock_duration_scalar_multiply_cpp",                         (DL_FUNC) &_clock_duration_scalar_multiply_cpp,                          3},
     {"_clock_duration_seq_by_lo_cpp",                               (DL_FUNC) &_clock_duration_seq_by_lo_cpp,                                4},
     {"_clock_duration_seq_to_by_cpp",                               (DL_FUNC) &_clock_duration_seq_to_by_cpp,                                4},

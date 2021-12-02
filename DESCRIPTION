@@ -1,6 +1,6 @@
 Package: clock
 Title: Date-Time Types and Tools
-Version: 0.5.0
+Version: 0.6.0
 Authors@R: 
     c(person(given = "Davis",
              family = "Vaughan",
@@ -31,9 +31,9 @@ LazyData: true
 RoxygenNote: 7.1.2
 SystemRequirements: C++11
 NeedsCompilation: yes
-Packaged: 2021-10-28 18:28:08 UTC; davis
+Packaged: 2021-12-02 15:12:58 UTC; davis
 Author: Davis Vaughan [aut, cre],
   RStudio [cph, fnd]
 Maintainer: Davis Vaughan <davis@rstudio.com>
 Repository: CRAN
-Date/Publication: 2021-10-29 06:40:06 UTC
+Date/Publication: 2021-12-02 15:50:02 UTC

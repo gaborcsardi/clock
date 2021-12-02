@@ -279,6 +279,91 @@ x %>%
   get_day()
 
 ## -----------------------------------------------------------------------------
+x <- year_month_day(1980, 12, 14:16)
+today <- year_month_day(2005, 12, 15)
+
+# Note that the month and day of the month are taken into account!
+# (Time of day would also be taken into account if there was any.)
+calendar_count_between(x, today, "year")
+
+## -----------------------------------------------------------------------------
+x <- date_build(1980, 12, 14:16)
+today <- date_build(2005, 12, 15)
+
+date_count_between(x, today, "year")
+
+## -----------------------------------------------------------------------------
+x <- year_month_day(2019, 11, 28)
+
+# lubridate::week(as.Date(x))
+# [1] 48
+
+x_start <- calendar_start(x, "year")
+x_start
+
+time_point_count_between(
+  as_naive_time(x_start),
+  as_naive_time(x),
+  "week"
+) + 1L
+
+## -----------------------------------------------------------------------------
+doy <- get_day(as_year_day(x))
+doy
+
+(doy - 1L) %/% 7L + 1L
+
+## -----------------------------------------------------------------------------
+x <- date_build(2019, 11, 28)
+
+date_count_between(date_start(x, "year"), x, "week") + 1L
+
+## -----------------------------------------------------------------------------
+x <- year_month_day(2013, 10, 15)
+y <- year_month_day(2016, 10, 13)
+
+## -----------------------------------------------------------------------------
+calendar_narrow(y, "month") - calendar_narrow(x, "month")
+
+## -----------------------------------------------------------------------------
+calendar_count_between(x, y, "month")
+
+## -----------------------------------------------------------------------------
+x_close <- add_months(x, calendar_count_between(x, y, "month"))
+x_close
+
+x_close_st <- as_sys_time(x_close)
+y_st <- as_sys_time(y)
+
+time_point_count_between(x_close_st, y_st, "day")
+
+## -----------------------------------------------------------------------------
+# Days between x and y
+days <- as_sys_time(y) - as_sys_time(x)
+days
+
+# In units of seconds
+days <- duration_cast(days, "second")
+days <- as.numeric(days)
+days
+
+# Average number of seconds in 1 proleptic Gregorian month
+avg_sec_in_month <- duration_cast(duration_months(1), "second")
+avg_sec_in_month <- as.numeric(avg_sec_in_month)
+
+days / avg_sec_in_month
+
+## -----------------------------------------------------------------------------
+x <- date_build(2013, 10, 15)
+y <- date_build(2016, 10, 13)
+
+## -----------------------------------------------------------------------------
+date_count_between(date_start(x, "month"), date_start(y, "month"), "month")
+
+## -----------------------------------------------------------------------------
+date_count_between(x, y, "month")
+
+## -----------------------------------------------------------------------------
 x <- "2020-10-25 01:30:00 IST"
 
 zoned_time_parse_abbrev(x, "Asia/Kolkata")

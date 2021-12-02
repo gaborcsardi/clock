@@ -1,3 +1,22 @@
+# clock 0.6.0
+
+* New `date_count_between()`, `calendar_count_between()`, and
+  `time_point_count_between()` for computing the number of units of time between
+  two dates (i.e. the number of years, months, days, or seconds). This has a
+  number of uses, like computing the age of an individual in years, or
+  determining the number of weeks that have passed since the start of the year
+  (#266).
+  
+* Modulus is now defined between a duration vector and an integer vector
+  through `<duration> %% <integer>`. This returns a duration vector containing
+  the remainder of the division (#273).
+
+* Integer division is now defined for two duration objects through
+  `<duration> %/% <duration>`. This always returns an integer vector, so be
+  aware that using very precise duration objects (like nanoseconds) can easily
+  generate a division result that is outside the range of an integer. In that
+  case, an `NA` is returned with a warning.
+
 # clock 0.5.0
 
 * New `date_time_parse_RFC_3339()` and `sys_time_parse_RFC_3339()` for parsing

@@ -230,7 +230,7 @@ as_sys_time.clock_naive_time <- function(x) {
 #' the `ambiguous` argument can be used to specify one of many ambiguous
 #' time resolution strategies.
 #'
-#' @inheritParams ellipsis::dots_empty
+#' @inheritParams rlang::args_dots_empty
 #'
 #' @param x `[clock_naive_time]`
 #'
@@ -450,7 +450,8 @@ as_zoned_time.clock_naive_time <- function(x,
   zone <- zone_validate(zone)
 
   # Promote to at least seconds precision for `zoned_time`
-  x <- vec_cast(x, vec_ptype2(x, naive_seconds()))
+  ptype <- vec_ptype2(x, clock_empty_naive_time_second, y_arg = "")
+  x <- vec_cast(x, ptype)
 
   size <- vec_size(x)
   precision <- time_point_precision_attribute(x)

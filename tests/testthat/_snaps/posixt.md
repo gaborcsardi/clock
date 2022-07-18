@@ -1,12 +1,8 @@
 # can't accidentally supply `zone` to reinterpret date-time in new zone
 
-    `...` is not empty.
-    
-    We detected these problematic arguments:
-    * `zone`
-    
-    These dots only exist to allow future extensions and should be empty.
-    Did you misspecify an argument?
+    `...` must be empty.
+    x Problematic argument:
+    * zone = "America/New_York"
 
 # can resolve nonexistent midnight issues for Date -> POSIXct
 
@@ -40,7 +36,8 @@
 
     Code
       date_floor(x, "day", origin = origin)
-    Warning <clock_warning_invalid_rounding_origin>
+    Condition
+      Warning:
       `origin` has been floored from 'second' precision to 'day' precision to match `precision`. This floor has lost information.
     Output
       [1] "1970-01-01 EST" "1970-01-02 EST"
@@ -78,79 +75,89 @@
 
 # can format date-times
 
-    C: 20
-    y: 18
-    Y: 2018
-    b: Dec
-    h: Dec
-    B: December
-    m: 12
-    d: 31
-    a: Mon
-    A: Monday
-    w: 1
-    g: 19
-    G: 2019
-    V: 01
-    u: 1
-    U: 52
-    W: 53
-    j: 365
-    D: 12/31/18
-    x: 12/31/18
-    F: 2018-12-31
-    H: 23
-    I: 11
-    M: 59
-    S: 59
-    p: PM
-    R: 23:59
-    T: 23:59:59
-    X: 23:59:59
-    r: 11:59:59 PM
-    c: Mon Dec 31 23:59:59 2018
-    %: %
-    z: -0500
-    Ez: -05:00
-    Z: America/New_York
+    Code
+      vapply(X = formats, FUN = function(format) date_format(x, format = format),
+      FUN.VALUE = character(1))
+    Output
+                              C: %C                         y: %y 
+                            "C: 20"                       "y: 18" 
+                              Y: %Y                         b: %b 
+                          "Y: 2018"                      "b: Dec" 
+                              h: %h                         B: %B 
+                           "h: Dec"                 "B: December" 
+                              m: %m                         d: %d 
+                            "m: 12"                       "d: 31" 
+                              a: %a                         A: %A 
+                           "a: Mon"                   "A: Monday" 
+                              w: %w                         g: %g 
+                             "w: 1"                       "g: 19" 
+                              G: %G                         V: %V 
+                          "G: 2019"                       "V: 01" 
+                              u: %u                         U: %U 
+                             "u: 1"                       "U: 52" 
+                              W: %W                         j: %j 
+                            "W: 53"                      "j: 365" 
+                              D: %D                         x: %x 
+                      "D: 12/31/18"                 "x: 12/31/18" 
+                              F: %F                         H: %H 
+                    "F: 2018-12-31"                       "H: 23" 
+                              I: %I                         M: %M 
+                            "I: 11"                       "M: 59" 
+                              S: %S                         p: %p 
+                            "S: 59"                       "p: PM" 
+                              R: %R                         T: %T 
+                         "R: 23:59"                 "T: 23:59:59" 
+                              X: %X                         r: %r 
+                      "X: 23:59:59"              "r: 11:59:59 PM" 
+                              c: %c                         %: %% 
+      "c: Mon Dec 31 23:59:59 2018"                        "%: %" 
+                              z: %z                       Ez: %Ez 
+                         "z: -0500"                  "Ez: -05:00" 
+                              Z: %Z 
+              "Z: America/New_York" 
 
 ---
 
-    C: 20
-    y: 18
-    Y: 2018
-    b: déc.
-    h: déc.
-    B: décembre
-    m: 12
-    d: 31
-    a: lun.
-    A: lundi
-    w: 1
-    g: 19
-    G: 2019
-    V: 01
-    u: 1
-    U: 52
-    W: 53
-    j: 365
-    D: 12/31/18
-    x: 12/31/18
-    F: 2018-12-31
-    H: 23
-    I: 11
-    M: 59
-    S: 59
-    p: PM
-    R: 23:59
-    T: 23:59:59
-    X: 23:59:59
-    r: 11:59:59 PM
-    c: lun. déc. 31 23:59:59 2018
-    %: %
-    z: -0500
-    Ez: -05:00
-    Z: America/New_York
+    Code
+      vapply(X = formats, FUN = function(format) date_format(x, format = format,
+        locale = clock_locale("fr")), FUN.VALUE = character(1))
+    Output
+                                C: %C                           y: %y 
+                              "C: 20"                         "y: 18" 
+                                Y: %Y                           b: %b 
+                            "Y: 2018"                       "b: déc." 
+                                h: %h                           B: %B 
+                            "h: déc."                   "B: décembre" 
+                                m: %m                           d: %d 
+                              "m: 12"                         "d: 31" 
+                                a: %a                           A: %A 
+                            "a: lun."                      "A: lundi" 
+                                w: %w                           g: %g 
+                               "w: 1"                         "g: 19" 
+                                G: %G                           V: %V 
+                            "G: 2019"                         "V: 01" 
+                                u: %u                           U: %U 
+                               "u: 1"                         "U: 52" 
+                                W: %W                           j: %j 
+                              "W: 53"                        "j: 365" 
+                                D: %D                           x: %x 
+                        "D: 12/31/18"                   "x: 12/31/18" 
+                                F: %F                           H: %H 
+                      "F: 2018-12-31"                         "H: 23" 
+                                I: %I                           M: %M 
+                              "I: 11"                         "M: 59" 
+                                S: %S                           p: %p 
+                              "S: 59"                         "p: PM" 
+                                R: %R                           T: %T 
+                           "R: 23:59"                   "T: 23:59:59" 
+                                X: %X                           r: %r 
+                        "X: 23:59:59"                "r: 11:59:59 PM" 
+                                c: %c                           %: %% 
+      "c: lun. déc. 31 23:59:59 2018"                          "%: %" 
+                                z: %z                         Ez: %Ez 
+                           "z: -0500"                    "Ez: -05:00" 
+                                Z: %Z 
+                "Z: America/New_York" 
 
 # can resolve ambiguity and nonexistent times
 
@@ -166,7 +173,8 @@
 
     Code
       date_time_parse("foo", "America/New_York")
-    Warning <clock_warning_parse_failures>
+    Condition
+      Warning:
       Failed to parse 1 string at location 1. Returning `NA` at that location.
     Output
       [1] NA
@@ -175,7 +183,8 @@
 
     Code
       date_time_parse_complete("foo")
-    Warning <clock_warning_parse_failures>
+    Condition
+      Warning:
       Failed to parse 1 string at location 1. Returning `NA` at that location.
     Output
       [1] NA
@@ -184,7 +193,8 @@
 
     Code
       date_time_parse_abbrev("foo", "America/New_York")
-    Warning <clock_warning_parse_failures>
+    Condition
+      Warning:
       Failed to parse 1 string at location 1. Returning `NA` at that location.
     Output
       [1] NA
@@ -282,13 +292,11 @@
 
 # validates integerish `by`
 
-    Can't convert from `by` <double> to <integer> due to loss of precision.
-    * Locations: 1
+    Can't convert `by` <double> to <integer>.
 
 # validates `total_size` early
 
-    Can't convert from `total_size` <double> to <integer> due to loss of precision.
-    * Locations: 1
+    Can't convert `total_size` <double> to <integer>.
 
 ---
 
@@ -333,13 +341,10 @@
 
 # checks empty dots
 
-    `...` is not empty.
-    
-    We detected these problematic arguments:
-    * `..1`
-    
-    These dots only exist to allow future extensions and should be empty.
-    Did you misspecify an argument?
+    `...` must be empty.
+    x Problematic argument:
+    * ..1 = new_datetime(2)
+    i Did you forget to name an argument?
 
 # must use a valid POSIXt precision
 
@@ -347,7 +352,8 @@
       (expect_error(date_count_between(x, x, "millisecond")))
     Output
       <error/rlang_error>
-      `precision` must be one of: 'year', 'quarter', 'month', 'week', 'day', 'hour', 'minute', 'second'.
+      Error in `date_count_between_impl()`:
+      ! `precision` must be one of: 'year', 'quarter', 'month', 'week', 'day', 'hour', 'minute', 'second'.
 
 # can't count between a POSIXt and a Date
 
@@ -355,7 +361,8 @@
       (expect_error(date_count_between(x, y, "year")))
     Output
       <error/rlang_error>
-      `end` must be a <POSIXt>.
+      Error in `date_count_between()`:
+      ! `end` must be a <POSIXt>.
 
 # <posixt> op <duration>
 

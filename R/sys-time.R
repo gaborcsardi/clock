@@ -341,7 +341,7 @@ as_naive_time.clock_sys_time <- function(x) {
 #' [from a naive-time][as-zoned-time-naive-time], which is a time point
 #' with a yet-to-be-determined time zone.
 #'
-#' @inheritParams ellipsis::dots_empty
+#' @inheritParams rlang::args_dots_empty
 #'
 #' @param x `[clock_sys_time]`
 #'
@@ -375,7 +375,7 @@ as_zoned_time.clock_sys_time <- function(x, zone, ...) {
   zone <- zone_validate(zone)
 
   # Promote to at least seconds precision for `zoned_time`
-  x <- vec_cast(x, vec_ptype2(x, sys_seconds()))
+  x <- vec_cast(x, vec_ptype2(x, clock_empty_sys_time_second))
 
   precision <- time_point_precision_attribute(x)
   names <- clock_rcrd_names(x)

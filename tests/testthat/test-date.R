@@ -265,13 +265,21 @@ test_that("can convert to a month factor", {
 
 test_that("can format dates", {
   x <- as.Date("2018-12-31")
-  format <- test_all_formats(zone = FALSE)
+  formats <- test_all_formats(zone = FALSE)
 
-  expect_snapshot_output(
-    cat(date_format(x, format = format))
+  expect_snapshot(
+    vapply(
+      X = formats,
+      FUN = function(format) date_format(x, format = format),
+      FUN.VALUE = character(1)
+    )
   )
-  expect_snapshot_output(
-    cat(date_format(x, format = format, locale = clock_locale("fr")))
+  expect_snapshot(
+    vapply(
+      X = formats,
+      FUN = function(format) date_format(x, format = format, locale = clock_locale("fr")),
+      FUN.VALUE = character(1)
+    )
   )
 })
 
@@ -479,6 +487,18 @@ test_that("components of `from` more precise than `by` are restored", {
   expect_identical(
     date_seq(date_build(2019, 2, 3), by = duration_years(1), total_size = 2),
     date_build(2019:2020, 2, 3)
+  )
+})
+
+test_that("seq() with `from > to && by > 0` or `from < to && by > 0` results in length 0 output (#282)", {
+  expect_identical(
+    date_seq(date_build(2019, 1, 2), to = date_build(2019, 1, 1), by = 1),
+    date_build(integer())
+  )
+
+  expect_identical(
+    date_seq(date_build(2019), to = date_build(2020), by = -1),
+    date_build(integer())
   )
 })
 

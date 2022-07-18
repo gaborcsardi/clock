@@ -1,3 +1,32 @@
+# clock 0.6.1
+
+* `date_seq()` and the `seq()` methods for the calendar, time point, and
+  duration types now allow `from > to` when `by > 0`. This now results in a
+  size zero result rather than an error, which is more in line with
+  `rlang::seq2()` and generally has more useful programmatic properties (#282).
+
+* The sys-time method for `as.POSIXct()` now correctly promotes to a precision
+  of at least seconds before attempting the conversion. This matches the
+  behavior of the naive-time method (#278).
+
+* Removed the dependency on ellipsis in favor of the equivalent functions in
+  rlang (#288).
+
+* Updated tests related to writing UTF-8 on Windows and testthat 3.1.2 (#287).
+
+* Updated all snapshot tests to use rlang 1.0.0 (#285).
+
+* tzdb >=0.3.0 is now required to get access to the latest time zone database
+  information (2022a).
+
+* vctrs >=0.4.1 and rlang >=1.0.4 are now required (#297).
+
+* cpp11 >=0.4.2 is now required to ensure that a fix related to unwind
+  protection is included.
+
+* R >=3.4.0 is now required. This is consistent with the standards of the
+  tidyverse.
+
 # clock 0.6.0
 
 * New `date_count_between()`, `calendar_count_between()`, and

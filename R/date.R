@@ -30,7 +30,7 @@ as_naive_time.Date <- function(x) {
 #' to resolve the issue. Similarly, if there are two possible midnight times due
 #' to a daylight saving time fallback, `ambiguous` can be used.
 #'
-#' @inheritParams ellipsis::dots_empty
+#' @inheritParams rlang::args_dots_empty
 #' @inheritParams as-zoned-time-naive-time
 #'
 #' @param x `[Date]`
@@ -263,7 +263,7 @@ get_date_field_year_month_day <- function(x, get_fn) {
 #' - `set_day()` sets the day of the month. Valid values are in the range
 #'   of `[1, 31]`.
 #'
-#' @inheritParams ellipsis::dots_empty
+#' @inheritParams rlang::args_dots_empty
 #' @inheritParams invalid_resolve
 #'
 #' @param x `[Date]`
@@ -894,7 +894,7 @@ date_month_factor.Date <- function(x,
 #'
 #' - [date-times (POSIXct/POSIXlt)][posixt-formatting]
 #'
-#' @inheritParams ellipsis::dots_empty
+#' @inheritParams rlang::args_dots_empty
 #'
 #' @param x `[Date / POSIXct / POSIXlt]`
 #'
@@ -926,7 +926,7 @@ date_format <- function(x, ...) {
 #' it currently has no implied time zone, using the `%z` or `%Z` format commands
 #' is not allowed and will result in `NA`.
 #'
-#' @inheritParams ellipsis::dots_empty
+#' @inheritParams rlang::args_dots_empty
 #' @inheritParams format.clock_zoned_time
 #'
 #' @param x `[Date]`
@@ -1373,13 +1373,11 @@ date_end.Date <- function(x, precision, ..., invalid = NULL) {
 #'
 #' - [date-times (POSIXct/POSIXlt)][posixt-sequence]
 #'
-#' @inheritParams ellipsis::dots_empty
+#' @inheritParams rlang::args_dots_empty
 #'
 #' @param from `[Date(1) / POSIXct(1) / POSIXlt(1)]`
 #'
 #'   A date or date-time to start the sequence from.
-#'
-#'   `from` is always included in the result.
 #'
 #' @param to `[Date(1) / POSIXct(1) / POSIXlt(1) / NULL]`
 #'
@@ -1391,10 +1389,6 @@ date_end.Date <- function(x, precision, ..., invalid = NULL) {
 #' @param by `[integer(1) / clock_duration(1) / NULL]`
 #'
 #'   The unit to increment the sequence by.
-#'
-#'   If `to < from`, then `by` must be positive.
-#'
-#'   If `to > from`, then `by` must be negative.
 #'
 #' @param total_size `[positive integer(1) / NULL]`
 #'
@@ -1438,8 +1432,6 @@ date_seq <- function(from,
 #'
 #'   A date to start the sequence from.
 #'
-#'   `from` is always included in the result.
-#'
 #' @param to `[Date(1) / NULL]`
 #'
 #'   A date to stop the sequence at.
@@ -1456,10 +1448,6 @@ date_seq <- function(from,
 #' @param by `[integer(1) / clock_duration(1) / NULL]`
 #'
 #'   The unit to increment the sequence by.
-#'
-#'   If `to < from`, then `by` must be positive.
-#'
-#'   If `to > from`, then `by` must be negative.
 #'
 #'   If `by` is an integer, it is equivalent to `duration_days(by)`.
 #'

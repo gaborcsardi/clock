@@ -130,21 +130,10 @@
 
 # seq() validates dots
 
-    `...` is not empty.
-    
-    We detected these problematic arguments:
-    * `..1`
-    
-    These dots only exist to allow future extensions and should be empty.
-    Did you misspecify an argument?
-
-# seq() validates from/to/by signs
-
-    When `from` is less than `to`, `by` must be positive.
-
----
-
-    When `from` is greater than `to`, `by` must be negative.
+    `...` must be empty.
+    x Problematic argument:
+    * ..1 = 1
+    i Did you forget to name an argument?
 
 # seq() enforces non-fractional results
 
@@ -176,12 +165,12 @@
 
 # can't convert calendrical duration to time point
 
-    Can't combine <duration<year>> and <duration<day>>.
+    Can't combine `x` <duration<year>> and <duration<day>>.
     Can't combine calendrical durations with chronological durations.
 
 ---
 
-    Can't combine <duration<year>> and <duration<day>>.
+    Can't combine `x` <duration<year>> and <duration<day>>.
     Can't combine calendrical durations with chronological durations.
 
 # precision: can only be called on durations
@@ -194,21 +183,24 @@
       (expect_error(duration_years(1) / duration_years(2)))
     Output
       <error/vctrs_error_incompatible_op>
-      <duration<year>> / <duration<year>> is not permitted
+      Error in `vec_arith()`:
+      ! <duration<year>> / <duration<year>> is not permitted
       Durations only support integer division. Did you want `%/%`?
 
 # `<duration> %/% <duration>` results in NA for OOB values
 
     Code
       out <- (numerator + one) %/% denominator
-    Warning <simpleWarning>
+    Condition
+      Warning:
       Conversion to integer is outside the range of an integer. `NA` values have been introduced, beginning at location 1.
 
 ---
 
     Code
       out <- (-numerator - one) %/% denominator
-    Warning <simpleWarning>
+    Condition
+      Warning:
       Conversion to integer is outside the range of an integer. `NA` values have been introduced, beginning at location 1.
 
 # `<duration> %% <numeric>` casts the numeric to integer
@@ -217,6 +209,7 @@
       (expect_error(duration_hours(5) %% 2.5))
     Output
       <error/vctrs_error_cast_lossy>
-      Can't convert from `y` <double> to <integer> due to loss of precision.
+      Error in `duration_scalar_arith()`:
+      ! Can't convert from `y` <double> to <integer> due to loss of precision.
       * Locations: 1
 

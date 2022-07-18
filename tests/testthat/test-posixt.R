@@ -97,6 +97,22 @@ test_that("casting to POSIXct floors components more precise than seconds (#205)
   )
 })
 
+test_that("casting to POSIXct with time point less precise than seconds works (#278)", {
+  x <- as_naive_time(year_month_day(2019, 1, 1, 1))
+
+  expect_identical(
+    as.POSIXct(x, "America/New_York"),
+    date_time_parse("2019-01-01 01:00:00", "America/New_York")
+  )
+
+  x <- as_sys_time(year_month_day(2019, 1, 1, 1))
+
+  expect_identical(
+    as.POSIXct(x, "America/New_York"),
+    date_time_parse("2018-12-31 20:00:00", "America/New_York")
+  )
+})
+
 # ------------------------------------------------------------------------------
 # as_weekday()
 
@@ -277,13 +293,21 @@ test_that("default format is correct", {
 
 test_that("can format date-times", {
   x <- as.POSIXct("2018-12-31 23:59:59", "America/New_York")
-  format <- test_all_formats()
+  formats <- test_all_formats()
 
-  expect_snapshot_output(
-    cat(date_format(x, format = format))
+  expect_snapshot(
+    vapply(
+      X = formats,
+      FUN = function(format) date_format(x, format = format),
+      FUN.VALUE = character(1)
+    )
   )
-  expect_snapshot_output(
-    cat(date_format(x, format = format, locale = clock_locale("fr")))
+  expect_snapshot(
+    vapply(
+      X = formats,
+      FUN = function(format) date_format(x, format = format, locale = clock_locale("fr")),
+      FUN.VALUE = character(1)
+    )
   )
 })
 
@@ -784,6 +808,20 @@ test_that("components of `to` more precise than `by` must match `from`", {
   expect_snapshot_error(date_seq(date_time_build(2019, 1, 1, zone = zone), to = date_time_build(2019, 2, 1, 1, zone = zone), by = duration_months(1)))
 
   expect_snapshot_error(date_seq(date_time_build(2019, 1, 1, zone = zone), to = date_time_build(2019, 1, 2, zone = zone), by = duration_years(1)))
+})
+
+test_that("seq() with `from > to && by > 0` or `from < to && by > 0` results in length 0 output (#282)", {
+  zone <- "America/New_York"
+
+  expect_identical(
+    date_seq(date_time_build(2019, 1, 2, second = 1, zone = zone), to = date_time_build(2019, 1, 2, zone = zone), by = 1),
+    date_time_build(integer(), zone = zone)
+  )
+
+  expect_identical(
+    date_seq(date_time_build(2019, zone = zone), to = date_time_build(2020, zone = zone), by = -1),
+    date_time_build(integer(), zone = zone)
+  )
 })
 
 test_that("`to` must have same time zone as `by`", {

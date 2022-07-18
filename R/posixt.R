@@ -17,7 +17,7 @@ as_naive_time.POSIXt <- function(x) {
 #' Converting from one of R's native date-time classes (POSIXct or POSIXlt)
 #' will retain the time zone of that object. There is no `zone` argument.
 #'
-#' @inheritParams ellipsis::dots_empty
+#' @inheritParams rlang::args_dots_empty
 #'
 #' @param x `[POSIXct / POSIXlt]`
 #'
@@ -105,11 +105,8 @@ as.POSIXct.clock_calendar <- function(x,
 
 #' @export
 as.POSIXct.clock_sys_time <- function(x, tz = "", ...) {
-  zone <- zone_validate(tz)
-  x <- time_point_floor(x, "second")
-  seconds <- to_sys_seconds_from_sys_duration_fields_cpp(x)
-  names(seconds) <- clock_rcrd_names(x)
-  new_datetime(seconds, zone)
+  x <- as_zoned_time(x, zone = tz)
+  as.POSIXct(x)
 }
 
 #' @export
@@ -125,8 +122,15 @@ as.POSIXct.clock_naive_time <- function(x,
 #' @export
 as.POSIXct.clock_zoned_time <- function(x, ...) {
   zone <- zoned_time_zone_attribute(x)
+
   x <- as_sys_time(x)
-  as.POSIXct(x, tz = zone)
+  x <- time_point_floor(x, "second")
+
+  seconds <- to_sys_seconds_from_sys_duration_fields_cpp(x)
+
+  names(seconds) <- clock_rcrd_names(x)
+
+  new_datetime(seconds, zone)
 }
 
 # ------------------------------------------------------------------------------
@@ -357,7 +361,7 @@ get_posixt_field_year_month_day <- function(x, get_fn) {
 #' - There are sub-daily setters for setting more precise components, up to
 #'   a precision of seconds.
 #'
-#' @inheritParams ellipsis::dots_empty
+#' @inheritParams rlang::args_dots_empty
 #' @inheritParams invalid_resolve
 #' @inheritParams as-zoned-time-naive-time
 #'
@@ -972,7 +976,7 @@ date_month_factor.POSIXt <- function(x,
 #' parses. Additionally, this format matches the de-facto standard extension to
 #' RFC 3339 for creating completely unambiguous date-times.
 #'
-#' @inheritParams ellipsis::dots_empty
+#' @inheritParams rlang::args_dots_empty
 #' @inheritParams format.clock_zoned_time
 #'
 #' @param x `[POSIXct / POSIXlt]`
@@ -1649,8 +1653,6 @@ date_end.POSIXt <- function(x,
 #'
 #'   A date-time to start the sequence from.
 #'
-#'   `from` is always included in the result.
-#'
 #' @param to `[POSIXct(1) / POSIXlt(1) / NULL]`
 #'
 #'   A date-time to stop the sequence at.
@@ -1670,10 +1672,6 @@ date_end.POSIXt <- function(x,
 #' @param by `[integer(1) / clock_duration(1) / NULL]`
 #'
 #'   The unit to increment the sequence by.
-#'
-#'   If `to < from`, then `by` must be positive.
-#'
-#'   If `to > from`, then `by` must be negative.
 #'
 #'   If `by` is an integer, it is equivalent to `duration_seconds(by)`.
 #'

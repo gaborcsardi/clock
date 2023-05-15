@@ -7,7 +7,6 @@
 #include "utils.h"
 #include "stream.h"
 #include "resolve.h"
-#include "check.h"
 
 namespace rclock {
 
@@ -61,47 +60,6 @@ resolve_previous_day_yw(const iso_week::year_weeknum& x) {
   return iso_week::year_weeknum{ylw.year(), ylw.weeknum()};
 }
 
-template <enum component Component>
-inline void check_range(const int& value, const char* arg) {
-  clock_abort("Unimplemented range check");
-}
-template <>
-inline void check_range<component::year>(const int& value, const char* arg) {
-  check_range_year(value, arg);
-}
-template <>
-inline void check_range<component::week>(const int& value, const char* arg) {
-  check_range_iso_week(value, arg);
-}
-template <>
-inline void check_range<component::day>(const int& value, const char* arg) {
-  check_range_iso_day(value, arg);
-}
-template <>
-inline void check_range<component::hour>(const int& value, const char* arg) {
-  check_range_hour(value, arg);
-}
-template <>
-inline void check_range<component::minute>(const int& value, const char* arg) {
-  check_range_minute(value, arg);
-}
-template <>
-inline void check_range<component::second>(const int& value, const char* arg) {
-  check_range_second(value, arg);
-}
-template <>
-inline void check_range<component::millisecond>(const int& value, const char* arg) {
-  check_range_millisecond(value, arg);
-}
-template <>
-inline void check_range<component::microsecond>(const int& value, const char* arg) {
-  check_range_microsecond(value, arg);
-}
-template <>
-inline void check_range<component::nanosecond>(const int& value, const char* arg) {
-  check_range_nanosecond(value, arg);
-}
-
 } // namespace detail
 
 class y
@@ -118,17 +76,10 @@ public:
 
   std::ostringstream& stream(std::ostringstream&, r_ssize i) const NOEXCEPT;
 
-  bool ok(r_ssize i) const NOEXCEPT;
-
   void add(const date::years& x, r_ssize i) NOEXCEPT;
 
   void assign_year(const iso_week::year& x, r_ssize i) NOEXCEPT;
   void assign_na(r_ssize i) NOEXCEPT;
-
-  void resolve(r_ssize i, const enum invalid type);
-
-  template <component Component>
-  void check_range(const int& value, const char* arg) const;
 
   iso_week::year to_year(r_ssize i) const NOEXCEPT;
   cpp11::writable::list to_list() const;
@@ -146,13 +97,11 @@ public:
 
   std::ostringstream& stream(std::ostringstream&, r_ssize i) const NOEXCEPT;
 
-  bool ok(r_ssize i) const NOEXCEPT;
-
   void assign_weeknum(const iso_week::weeknum& x, r_ssize i) NOEXCEPT;
   void assign_year_weeknum(const iso_week::year_weeknum& x, r_ssize i) NOEXCEPT;
   void assign_na(r_ssize i) NOEXCEPT;
 
-  void resolve(r_ssize i, const enum invalid type);
+  void resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call);
 
   iso_week::year_weeknum to_year_weeknum(r_ssize i) const NOEXCEPT;
   cpp11::writable::list to_list() const;
@@ -171,14 +120,12 @@ public:
 
   std::ostringstream& stream(std::ostringstream&, r_ssize i) const NOEXCEPT;
 
-  bool ok(r_ssize i) const NOEXCEPT;
-
   void assign_weekday(const iso_week::weekday& x, r_ssize i) NOEXCEPT;
   void assign_year_weeknum_weekday(const iso_week::year_weeknum_weekday& x, r_ssize i) NOEXCEPT;
   void assign_sys_time(const date::sys_time<date::days>& x, r_ssize i) NOEXCEPT;
   void assign_na(r_ssize i) NOEXCEPT;
 
-  void resolve(r_ssize i, const enum invalid type);
+  void resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call);
 
   date::sys_time<date::days> to_sys_time(r_ssize i) const NOEXCEPT;
   iso_week::year_weeknum_weekday to_year_weeknum_weekday(r_ssize i) const NOEXCEPT;
@@ -203,7 +150,7 @@ public:
   void assign_sys_time(const date::sys_time<std::chrono::hours>& x, r_ssize i) NOEXCEPT;
   void assign_na(r_ssize i) NOEXCEPT;
 
-  void resolve(r_ssize i, const enum invalid type);
+  void resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call);
 
   date::sys_time<std::chrono::hours> to_sys_time(r_ssize i) const NOEXCEPT;
   cpp11::writable::list to_list() const;
@@ -228,7 +175,7 @@ public:
   void assign_sys_time(const date::sys_time<std::chrono::minutes>& x, r_ssize i) NOEXCEPT;
   void assign_na(r_ssize i) NOEXCEPT;
 
-  void resolve(r_ssize i, const enum invalid type);
+  void resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call);
 
   date::sys_time<std::chrono::minutes> to_sys_time(r_ssize i) const NOEXCEPT;
   cpp11::writable::list to_list() const;
@@ -254,7 +201,7 @@ public:
   void assign_sys_time(const date::sys_time<std::chrono::seconds>& x, r_ssize i) NOEXCEPT;
   void assign_na(r_ssize i) NOEXCEPT;
 
-  void resolve(r_ssize i, const enum invalid type);
+  void resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call);
 
   date::sys_time<std::chrono::seconds> to_sys_time(r_ssize i) const NOEXCEPT;
   cpp11::writable::list to_list() const;
@@ -282,7 +229,7 @@ public:
   void assign_sys_time(const date::sys_time<Duration>& x, r_ssize i) NOEXCEPT;
   void assign_na(r_ssize i) NOEXCEPT;
 
-  void resolve(r_ssize i, const enum invalid type);
+  void resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call);
 
   date::sys_time<Duration> to_sys_time(r_ssize i) const NOEXCEPT;
   cpp11::writable::list to_list() const;
@@ -325,13 +272,6 @@ y::stream(std::ostringstream& os, r_ssize i) const NOEXCEPT
 }
 
 inline
-bool
-y::ok(r_ssize i) const NOEXCEPT
-{
-  return true;
-}
-
-inline
 void
 y::add(const date::years& x, r_ssize i) NOEXCEPT
 {
@@ -350,21 +290,6 @@ void
 y::assign_na(r_ssize i) NOEXCEPT
 {
   year_.assign_na(i);
-}
-
-inline
-void
-y::resolve(r_ssize i, const enum invalid type)
-{
-  // Never invalid
-}
-
-template <component Component>
-inline
-void
-y::check_range(const int& value, const char* arg) const
-{
-  detail::check_range<Component>(value, arg);
 }
 
 inline
@@ -409,13 +334,6 @@ ywn::stream(std::ostringstream& os, r_ssize i) const NOEXCEPT
 }
 
 inline
-bool
-ywn::ok(r_ssize i) const NOEXCEPT
-{
-  return to_year_weeknum(i).ok();
-}
-
-inline
 void
 ywn::assign_weeknum(const iso_week::weeknum& x, r_ssize i) NOEXCEPT
 {
@@ -440,7 +358,7 @@ ywn::assign_na(r_ssize i) NOEXCEPT
 
 inline
 void
-ywn::resolve(r_ssize i, const enum invalid type)
+ywn::resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call)
 {
   const iso_week::year_weeknum elt = to_year_weeknum(i);
 
@@ -470,7 +388,7 @@ ywn::resolve(r_ssize i, const enum invalid type)
     break;
   }
   case invalid::error: {
-    rclock::detail::resolve_error(i);
+    rclock::detail::resolve_error(i, call);
   }
   }
 }
@@ -518,13 +436,6 @@ ywnwd::stream(std::ostringstream& os, r_ssize i) const NOEXCEPT
 }
 
 inline
-bool
-ywnwd::ok(r_ssize i) const NOEXCEPT
-{
-  return to_year_weeknum_weekday(i).ok();
-}
-
-inline
 void
 ywnwd::assign_weekday(const iso_week::weekday& x, r_ssize i) NOEXCEPT
 {
@@ -558,7 +469,7 @@ ywnwd::assign_na(r_ssize i) NOEXCEPT
 
 inline
 void
-ywnwd::resolve(r_ssize i, const enum invalid type)
+ywnwd::resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call)
 {
   const iso_week::year_weeknum_weekday elt = to_year_weeknum_weekday(i);
 
@@ -587,7 +498,7 @@ ywnwd::resolve(r_ssize i, const enum invalid type)
     break;
   }
   case invalid::error: {
-    rclock::detail::resolve_error(i);
+    rclock::detail::resolve_error(i, call);
   }
   }
 }
@@ -671,7 +582,7 @@ ywnwdh::assign_na(r_ssize i) NOEXCEPT
 
 inline
 void
-ywnwdh::resolve(r_ssize i, const enum invalid type)
+ywnwdh::resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call)
 {
   const iso_week::year_weeknum_weekday elt = to_year_weeknum_weekday(i);
 
@@ -709,7 +620,7 @@ ywnwdh::resolve(r_ssize i, const enum invalid type)
     break;
   }
   case invalid::error: {
-    rclock::detail::resolve_error(i);
+    rclock::detail::resolve_error(i, call);
   }
   }
 }
@@ -785,7 +696,7 @@ ywnwdhm::assign_na(r_ssize i) NOEXCEPT
 
 inline
 void
-ywnwdhm::resolve(r_ssize i, const enum invalid type)
+ywnwdhm::resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call)
 {
   const iso_week::year_weeknum_weekday elt = to_year_weeknum_weekday(i);
 
@@ -826,7 +737,7 @@ ywnwdhm::resolve(r_ssize i, const enum invalid type)
     break;
   }
   case invalid::error: {
-    rclock::detail::resolve_error(i);
+    rclock::detail::resolve_error(i, call);
   }
   }
 }
@@ -903,7 +814,7 @@ ywnwdhms::assign_na(r_ssize i) NOEXCEPT
 
 inline
 void
-ywnwdhms::resolve(r_ssize i, const enum invalid type)
+ywnwdhms::resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call)
 {
   const iso_week::year_weeknum_weekday elt = to_year_weeknum_weekday(i);
 
@@ -947,7 +858,7 @@ ywnwdhms::resolve(r_ssize i, const enum invalid type)
     break;
   }
   case invalid::error: {
-    rclock::detail::resolve_error(i);
+    rclock::detail::resolve_error(i, call);
   }
   }
 }
@@ -1032,7 +943,7 @@ ywnwdhmss<Duration>::assign_na(r_ssize i) NOEXCEPT
 template <typename Duration>
 inline
 void
-ywnwdhmss<Duration>::resolve(r_ssize i, const enum invalid type)
+ywnwdhmss<Duration>::resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call)
 {
   const iso_week::year_weeknum_weekday elt = to_year_weeknum_weekday(i);
 
@@ -1079,7 +990,7 @@ ywnwdhmss<Duration>::resolve(r_ssize i, const enum invalid type)
     break;
   }
   case invalid::error: {
-    rclock::detail::resolve_error(i);
+    rclock::detail::resolve_error(i, call);
   }
   }
 }

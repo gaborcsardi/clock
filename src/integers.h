@@ -5,72 +5,75 @@
 
 namespace rclock {
 
-static const cpp11::integers clock_empty_integers = cpp11::integers{};
-
 class integers
 {
-  const cpp11::integers& read_;
+  const cpp11::integers read_;
   cpp11::writable::integers write_;
   bool writable_;
+  r_ssize size_;
 
 public:
-  CONSTCD11 integers() NOEXCEPT;
-  CONSTCD11 integers(const cpp11::integers& x) NOEXCEPT;
+  integers() noexcept;
+  integers(const cpp11::integers& x);
   integers(r_ssize size);
 
-  bool is_na(r_ssize i) const NOEXCEPT;
-  r_ssize size() const NOEXCEPT;
+  bool is_na(r_ssize i) const noexcept;
+  r_ssize size() const noexcept;
 
   void assign(int x, r_ssize i);
   void assign_na(r_ssize i);
 
-  int operator[](r_ssize i) const NOEXCEPT;
+  int operator[](r_ssize i) const noexcept;
 
-  SEXP sexp() const NOEXCEPT;
-
-private:
-  bool is_writable() const NOEXCEPT;
-  void as_writable();
+  SEXP sexp() const noexcept;
 };
 
-CONSTCD11
+namespace detail {
+
+static const cpp11::integers empty_integers = cpp11::integers{};
+
+} // namespace detail
+
 inline
-integers::integers() NOEXCEPT
-  : read_(clock_empty_integers),
-    writable_(false)
+integers::integers() noexcept
+  : read_(detail::empty_integers),
+    writable_(false),
+    size_(0)
   {}
 
-CONSTCD11
 inline
-integers::integers(const cpp11::integers& x) NOEXCEPT
+integers::integers(const cpp11::integers& x)
   : read_(x),
-    writable_(false)
+    writable_(false),
+    size_(x.size())
   {}
 
 inline
 integers::integers(r_ssize size)
-  : read_(clock_empty_integers),
+  : read_(detail::empty_integers),
     write_(cpp11::writable::integers(size)),
-    writable_(true)
+    writable_(true),
+    size_(size)
   {}
 
 inline
 bool
-integers::is_na(r_ssize i) const NOEXCEPT {
+integers::is_na(r_ssize i) const noexcept {
   return this->operator[](i) == r_int_na;
 }
 
 inline
 r_ssize
-integers::size() const NOEXCEPT {
-  return read_.size();
+integers::size() const noexcept {
+  return size_;
 }
 
 inline
 void
 integers::assign(int x, r_ssize i) {
-  if (!is_writable()) {
-    as_writable();
+  if (!writable_) {
+    write_ = cpp11::writable::integers(read_);
+    writable_ = true;
   }
   write_[i] = x;
 }
@@ -83,27 +86,14 @@ integers::assign_na(r_ssize i) {
 
 inline
 int
-integers::operator[](r_ssize i) const NOEXCEPT {
+integers::operator[](r_ssize i) const noexcept {
   return writable_ ? write_[i] : read_[i];
 }
 
 inline
 SEXP
-integers::sexp() const NOEXCEPT {
+integers::sexp() const noexcept {
   return writable_ ? write_ : read_;
-}
-
-inline
-bool
-integers::is_writable() const NOEXCEPT {
-  return writable_;
-}
-
-inline
-void
-integers::as_writable() {
-  write_ = cpp11::writable::integers(read_);
-  writable_ = true;
 }
 
 } // namespace rclock

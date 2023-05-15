@@ -175,13 +175,41 @@ as_zoned_time(x, "Europe/London")
 ## -----------------------------------------------------------------------------
 x <- as.POSIXct("2019-01-01 23:00:00", "America/New_York")
 
-as.Date(x, tz = date_zone(x))
+as.Date(x, tz = date_time_zone(x))
 
 ## -----------------------------------------------------------------------------
-utc <- date_set_zone(x, "UTC")
+utc <- date_time_set_zone(x, "UTC")
 utc
 
-as.Date(utc, tz = date_zone(utc))
+as.Date(utc, tz = date_time_zone(utc))
+
+## ---- warning=TRUE------------------------------------------------------------
+raw <- c(
+  "2015-12-31T23:59:59", 
+  "2015-12-31T23:59:60", # A real leap second!
+  "2016-01-01T00:00:00"
+)
+
+x <- sys_time_parse(raw)
+
+x
+
+## -----------------------------------------------------------------------------
+# Reported as exactly 1 second apart.
+# In real life these are 2 seconds apart because of the leap second.
+x[[3]] - x[[1]]
+
+## -----------------------------------------------------------------------------
+# This returns a POSIXlt, which can handle the special 60s field
+x <- strptime(raw, format = "%Y-%m-%dT%H:%M:%S", tz = "UTC")
+x
+
+# On conversion to POSIXct, it "rolls" forward
+as.POSIXct(x)
+
+## -----------------------------------------------------------------------------
+# 2016-12-31 wasn't a leap second date, but it still tries to parse this fake time
+strptime("2016-12-31T23:59:60", format = "%Y-%m-%dT%H:%M:%S", tz = "UTC")
 
 ## ---- eval=FALSE--------------------------------------------------------------
 #  library(data.table)

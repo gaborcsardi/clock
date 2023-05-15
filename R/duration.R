@@ -140,8 +140,13 @@ duration_nanoseconds <- function(n = integer()) {
   duration_helper(n, PRECISION_NANOSECOND)
 }
 
-duration_helper <- function(n, precision, ..., retain_names = FALSE, n_arg = "n") {
-  check_dots_empty()
+duration_helper <- function(n,
+                            precision,
+                            ...,
+                            retain_names = FALSE,
+                            error_arg = caller_arg(n),
+                            error_call = caller_env()) {
+  check_dots_empty0(...)
 
   # Generally don't retain names for helpers like `duration_years()`,
   # but might need to during arithmetic
@@ -151,7 +156,7 @@ duration_helper <- function(n, precision, ..., retain_names = FALSE, n_arg = "n"
     names <- NULL
   }
 
-  n <- vec_cast(n, integer(), x_arg = n_arg)
+  n <- vec_cast(n, integer(), x_arg = error_arg, call = error_call)
   fields <- duration_helper_cpp(n, precision)
 
   new_duration_from_fields(fields, precision, names)
@@ -278,6 +283,8 @@ vec_cast.clock_duration.clock_duration <- function(x, to, ...) {
 #'
 #' To round an existing duration to another precision, see [duration_floor()].
 #'
+#' @inheritParams rlang::args_dots_empty
+#'
 #' @param x `[object]`
 #'
 #'   An object to convert to a duration.
@@ -296,19 +303,22 @@ vec_cast.clock_duration.clock_duration <- function(x, to, ...) {
 #'
 #' # The number of seconds since 1970-01-01 00:00:00 UTC
 #' as_duration(x)
-as_duration <- function(x) {
+as_duration <- function(x, ...) {
   UseMethod("as_duration")
 }
 
 #' @export
-as_duration.clock_duration <- function(x) {
+as_duration.clock_duration <- function(x, ...) {
+  check_dots_empty0(...)
   x
 }
 
 # ------------------------------------------------------------------------------
 
 #' @export
-as_sys_time.clock_duration <- function(x) {
+as_sys_time.clock_duration <- function(x, ...) {
+  check_dots_empty0(...)
+
   names <- clock_rcrd_names(x)
 
   # Promote to at least day precision for sys-time
@@ -321,8 +331,14 @@ as_sys_time.clock_duration <- function(x) {
 }
 
 #' @export
-as_naive_time.clock_duration <- function(x) {
+as_naive_time.clock_duration <- function(x, ...) {
+  check_dots_empty0(...)
   as_naive_time(as_sys_time(x))
+}
+
+#' @export
+as.character.clock_duration <- function(x, ...) {
+  format(x)
 }
 
 #' @export
@@ -414,11 +430,12 @@ as.double.clock_duration <- function(x, ...) {
 #' # Casting to a more precise precision
 #' duration_cast(x, "millisecond")
 duration_cast <- function(x, precision) {
-  if (!is_duration(x)) {
-    abort("`x` must be a duration.")
-  }
+  check_duration(x)
   x_precision <- duration_precision_attribute(x)
-  precision <- validate_precision_string(precision)
+
+  check_precision(precision)
+  precision <- precision_to_integer(precision)
+
   fields <- duration_cast_cpp(x, x_precision, precision)
   new_duration_from_fields(fields, precision, clock_rcrd_names(x))
 }
@@ -502,36 +519,38 @@ duration_round <- function(x, precision, ..., n = 1L) {
   duration_rounder(x, precision, n, duration_round_cpp, "round", ...)
 }
 
-duration_rounder <- function(x, precision, n, rounder, verb, ...) {
-  check_dots_empty()
+duration_rounder <- function(x,
+                             precision,
+                             n,
+                             rounder,
+                             verb,
+                             ...,
+                             error_arg = caller_arg(x),
+                             error_call = caller_env()) {
+  check_dots_empty0(...)
 
-  if (!is_duration(x)) {
-    abort("`x` must be a duration object.")
-  }
+  check_duration(x, arg = error_arg, call = error_call)
 
-  n <- vec_cast(n, integer(), x_arg = "n")
-  if (!is_number(n)) {
-    abort("`n` must be a single number.")
-  }
-  if (n <= 0L) {
-    abort("`n` must be a positive number.")
-  }
+  check_number_whole(n, min = 0, call = error_call)
+  n <- vec_cast(n, integer(), call = error_call)
 
-  precision <- validate_precision_string(precision)
+  check_precision(precision, call = error_call)
+  precision <- precision_to_integer(precision)
+
   x_precision <- duration_precision_attribute(x)
 
   if (x_precision < precision) {
-    abort(paste0("Can't ", verb, " to a more precise precision."))
+    cli::cli_abort("Can't {verb} to a more precise precision.", call = error_call)
   }
   if (!duration_has_common_precision_cpp(x_precision, precision)) {
     precision <- precision_to_string(precision)
     x_precision <- precision_to_string(x_precision)
     message <- paste0(
-      "Can't ", verb, " from ",
-      "a chronological precision (", x_precision, ") to ",
-      "a calendrical precision (", precision, ")."
+      "Can't {verb} from ",
+      "a chronological precision ({x_precision}) to ",
+      "a calendrical precision ({precision})."
     )
-    abort(message)
+    cli::cli_abort(message, call = error_call)
   }
 
   fields <- rounder(x, x_precision, precision, n)
@@ -617,12 +636,10 @@ seq.clock_duration <- function(from,
                                length.out = NULL,
                                along.with = NULL,
                                ...) {
-  check_dots_empty()
+  check_dots_empty0(...)
 
-  vec_assert(from, size = 1L)
-  if (is.na(from)) {
-    abort("`from` can't be `NA`.")
-  }
+  vec_check_size(from, 1L)
+  check_no_missing(from)
 
   has_to <- !is_null(to)
   has_by <- !is_null(by)
@@ -652,28 +669,24 @@ seq.clock_duration <- function(from,
 
   if (has_to) {
     to <- vec_cast(to, from, x_arg = "to", to_arg = "from")
-
-    vec_assert(to, size = 1L, arg = "to")
-    if (is.na(to)) {
-      abort("`to` can't be `NA`.")
-    }
+    vec_check_size(to, 1L)
+    check_no_missing(to)
   }
 
   if (has_by) {
     precision <- duration_precision_attribute(from)
     by <- duration_collect_by(by, precision)
 
-    vec_assert(by, size = 1L, arg = "by")
-    if (is.na(by)) {
-      abort("`by` can't be `NA`.")
-    }
+    vec_check_size(by, size = 1L)
+    check_no_missing(by)
+
     if (by == duration_helper(0L, precision)) {
       abort("`by` can't be `0`.")
     }
   }
 
   if (has_lo) {
-    length.out <- check_length_out(length.out, arg = "length.out")
+    length.out <- check_length_out(length.out)
   }
 
   if (has_to) {
@@ -708,32 +721,37 @@ duration_seq_by_lo <- function(from, by, length.out) {
   new_duration_from_fields(fields, precision, names)
 }
 
-duration_collect_by <- function(by, precision) {
+duration_collect_by <- function(by,
+                                precision,
+                                ...,
+                                error_arg = caller_arg(by),
+                                error_call = caller_env()) {
+  check_dots_empty0(...)
+
   if (is_duration(by)) {
     to <- duration_helper(integer(), precision)
-    vec_cast(by, to, x_arg = "by")
+    vec_cast(by, to, x_arg = error_arg, call = error_call)
   } else {
-    duration_helper(by, precision, n_arg = "by")
+    duration_helper(by, precision, error_arg = error_arg, error_call = error_call)
   }
 }
 
-check_length_out <- function(length.out, arg) {
-  length.out <- vec_cast(length.out, integer(), x_arg = arg)
+check_length_out <- function(x, ..., arg = caller_arg(x), call = caller_env()) {
+  check_dots_empty0(...)
 
-  vec_assert(length.out, size = 1L, arg = arg)
+  out <- vec_cast(x, integer(), x_arg = arg, call = call)
 
-  if (is.na(length.out)) {
-    abort(paste0("`", arg, "` can't be `NA`."))
+  vec_check_size(out, 1L, arg = arg, call = call)
+  check_no_missing(out, arg = arg, call = call)
+
+  if (out < 0) {
+    cli::cli_abort("{.arg {arg}} can't be negative.", call = call)
   }
 
-  if (length.out < 0) {
-    abort(paste0("`", arg, "` can't be negative."))
-  }
-
-  length.out
+  out
 }
 
-# Used by other methods that eventually call the duration seq() method
+# Used by calendar methods that eventually call the duration seq() method
 seq_impl <- function(from, to, by, length.out, along.with, precision, ...) {
   if (!is_null(to)) {
     to <- vec_cast(to, from, x_arg = "to", to_arg = "from")
@@ -753,6 +771,47 @@ seq_impl <- function(from, to, by, length.out, along.with, precision, ...) {
   )
 
   start + steps
+}
+
+# ------------------------------------------------------------------------------
+
+#' Spanning sequence: duration
+#'
+#' @description
+#' `duration_spanning_seq()` generates a regular sequence along the span of `x`,
+#' i.e. along `[min(x), max(x)]`.
+#'
+#' @details
+#' Missing values are automatically removed before the sequence is generated.
+#'
+#' If you need more precise sequence generation, call [range()] and [seq()]
+#' directly.
+#'
+#' @param x `[clock_duration]`
+#'
+#'   A duration vector.
+#'
+#' @return A sequence along `[min(x), max(x)]`.
+#'
+#' @export
+#' @examples
+#' x <- duration_days(c(1, 5, 2))
+#' duration_spanning_seq(x)
+#'
+#' # Missing values are removed before the sequence is created
+#' x <- vctrs::vec_c(NA, x, NA)
+#' duration_spanning_seq(x)
+duration_spanning_seq <- function(x) {
+  check_duration(x)
+  spanning_seq_impl(x)
+}
+
+spanning_seq_impl <- function(x) {
+  range <- range(x, na.rm = TRUE)
+  from <- range[[1L]]
+  to <- range[[2L]]
+
+  seq(from = from, to = to, by = 1L)
 }
 
 # ------------------------------------------------------------------------------
@@ -879,9 +938,10 @@ vec_arith.numeric.clock_duration <- function(op, x, y, ...) {
 #' (such as adding days and months). For more information, see the
 #' documentation on the [duration helper][duration-helper] page.
 #'
-#' `x` and `n` are recycled against each other.
+#' `x` and `n` are recycled against each other using
+#' [tidyverse recycling rules][vctrs::vector_recycling_rules].
 #'
-#' @inheritParams add_years
+#' @inheritParams clock-arithmetic
 #'
 #' @param x `[clock_duration]`
 #'
@@ -983,17 +1043,32 @@ add_nanoseconds.clock_duration <- function(x, n, ...) {
   duration_plus(x, n, names_common(x, n))
 }
 
-duration_collect_n <- function(n, precision) {
+duration_collect_n <- function(n,
+                               precision,
+                               ...,
+                               error_arg = caller_arg(n),
+                               error_call = caller_env()) {
+  check_dots_empty0(...)
+
   if (is_duration_with_precision(n, precision)) {
     return(n)
   }
 
   if (is_duration(n)) {
-    precision_string <- precision_to_string(precision)
-    abort(paste0("`n` must have '", precision_string, "' precision."))
+    precision <- precision_to_string(precision)
+    cli::cli_abort(
+      "{.arg {error_arg}} must have {.str {precision}} precision.",
+      call = error_call
+    )
   }
 
-  duration_helper(n, precision, retain_names = TRUE)
+  duration_helper(
+    n = n,
+    precision = precision,
+    retain_names = TRUE,
+    error_arg = error_arg,
+    error_call = error_call
+  )
 }
 
 # ------------------------------------------------------------------------------
@@ -1009,9 +1084,8 @@ duration_modulus <- function(x, y, names) {
 }
 
 duration_arith <- function(x, y, names, fn) {
-  if (!is_duration(x) || !is_duration(y)) {
-    abort("`x` and `y` must both be 'duration' objects.")
-  }
+  check_duration(x)
+  check_duration(y)
 
   args <- vec_cast_common(x = x, y = y)
   args <- vec_recycle_common(!!!args, names = names)
@@ -1031,9 +1105,8 @@ duration_integer_divide <- function(x, y, names) {
 }
 
 duration_arith_integer <- function(x, y, names, fn) {
-  if (!is_duration(x) || !is_duration(y)) {
-    abort("`x` and `y` must both be 'duration' objects.")
-  }
+  check_duration(x)
+  check_duration(y)
 
   args <- vec_cast_common(x = x, y = y)
   args <- vec_recycle_common(!!!args, names = names)
@@ -1061,9 +1134,7 @@ duration_scalar_divide <- function(x, y, names) {
 }
 
 duration_scalar_arith <- function(x, y, names, fn) {
-  if (!is_duration(x)) {
-    abort("`x` must be a 'duration' object.")
-  }
+  check_duration(x)
 
   precision <- duration_precision_attribute(x)
 
@@ -1117,6 +1188,10 @@ is_duration_with_precision <- function(x, precision) {
   is_duration(x) && duration_precision_attribute(x) == precision
 }
 
+check_duration <- function(x, ..., arg = caller_arg(x), call = caller_env()) {
+  check_inherits(x, what = "clock_duration", arg = arg, call = call)
+}
+
 # ------------------------------------------------------------------------------
 
 #' Precision: duration
@@ -1136,12 +1211,63 @@ is_duration_with_precision <- function(x, precision) {
 #' duration_precision(duration_nanoseconds(2))
 #' duration_precision(duration_quarters(1:5))
 duration_precision <- function(x) {
-  if (!is_duration(x)) {
-    abort("`x` must be a 'clock_duration'.")
-  }
+  check_duration(x)
   precision <- duration_precision_attribute(x)
   precision <- precision_to_string(precision)
   precision
+}
+
+# ------------------------------------------------------------------------------
+
+#' @export
+clock_minimum.clock_duration <- function(x) {
+  switch(
+    duration_precision_attribute(x) + 1L,
+    clock_minimum_duration_year,
+    clock_minimum_duration_quarter,
+    clock_minimum_duration_month,
+    clock_minimum_duration_week,
+    clock_minimum_duration_day,
+    clock_minimum_duration_hour,
+    clock_minimum_duration_minute,
+    clock_minimum_duration_second,
+    clock_minimum_duration_millisecond,
+    clock_minimum_duration_microsecond,
+    clock_minimum_duration_nanosecond,
+    abort("Invalid precision", .internal = TRUE)
+  )
+}
+
+#' @export
+clock_maximum.clock_duration <- function(x) {
+  switch(
+    duration_precision_attribute(x) + 1L,
+    clock_maximum_duration_year,
+    clock_maximum_duration_quarter,
+    clock_maximum_duration_month,
+    clock_maximum_duration_week,
+    clock_maximum_duration_day,
+    clock_maximum_duration_hour,
+    clock_maximum_duration_minute,
+    clock_maximum_duration_second,
+    clock_maximum_duration_millisecond,
+    clock_maximum_duration_microsecond,
+    clock_maximum_duration_nanosecond,
+    abort("Invalid precision", .internal = TRUE)
+  )
+}
+
+duration_minimum <- function(precision) {
+  names <- NULL
+  precision <- precision_to_integer(precision)
+  fields <- duration_minimum_cpp(precision)
+  new_duration_from_fields(fields, precision, names)
+}
+duration_maximum <- function(precision) {
+  names <- NULL
+  precision <- precision_to_integer(precision)
+  fields <- duration_maximum_cpp(precision)
+  new_duration_from_fields(fields, precision, names)
 }
 
 # ------------------------------------------------------------------------------
@@ -1152,18 +1278,30 @@ duration_precision_attribute <- function(x) {
 
 # ------------------------------------------------------------------------------
 
-field_ticks <- function(x) {
-  # The `ticks` field is the first field of every
-  # duration / time point / zoned time type, which makes it the field that
-  # names are on. When extracting the field, we don't ever
-  # want the names to come with it.
-  out <- field(x, "ticks")
-  names(out) <- NULL
-  out
-}
-field_ticks_of_day <- function(x) {
-  field(x, "ticks_of_day")
-}
-field_ticks_of_second <- function(x) {
-  field(x, "ticks_of_second")
+clock_init_duration_utils <- function(env) {
+  assign("clock_minimum_duration_year", duration_minimum("year"), envir = env)
+  assign("clock_minimum_duration_quarter", duration_minimum("quarter"), envir = env)
+  assign("clock_minimum_duration_month", duration_minimum("month"), envir = env)
+  assign("clock_minimum_duration_week", duration_minimum("week"), envir = env)
+  assign("clock_minimum_duration_day", duration_minimum("day"), envir = env)
+  assign("clock_minimum_duration_hour", duration_minimum("hour"), envir = env)
+  assign("clock_minimum_duration_minute", duration_minimum("minute"), envir = env)
+  assign("clock_minimum_duration_second", duration_minimum("second"), envir = env)
+  assign("clock_minimum_duration_millisecond", duration_minimum("millisecond"), envir = env)
+  assign("clock_minimum_duration_microsecond", duration_minimum("microsecond"), envir = env)
+  assign("clock_minimum_duration_nanosecond", duration_minimum("nanosecond"), envir = env)
+
+  assign("clock_maximum_duration_year", duration_maximum("year"), envir = env)
+  assign("clock_maximum_duration_quarter", duration_maximum("quarter"), envir = env)
+  assign("clock_maximum_duration_month", duration_maximum("month"), envir = env)
+  assign("clock_maximum_duration_week", duration_maximum("week"), envir = env)
+  assign("clock_maximum_duration_day", duration_maximum("day"), envir = env)
+  assign("clock_maximum_duration_hour", duration_maximum("hour"), envir = env)
+  assign("clock_maximum_duration_minute", duration_maximum("minute"), envir = env)
+  assign("clock_maximum_duration_second", duration_maximum("second"), envir = env)
+  assign("clock_maximum_duration_millisecond", duration_maximum("millisecond"), envir = env)
+  assign("clock_maximum_duration_microsecond", duration_maximum("microsecond"), envir = env)
+  assign("clock_maximum_duration_nanosecond", duration_maximum("nanosecond"), envir = env)
+
+  invisible(NULL)
 }

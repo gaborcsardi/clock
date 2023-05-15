@@ -16,6 +16,10 @@ is_zoned_time <- function(x) {
   inherits(x, "clock_zoned_time")
 }
 
+check_zoned_time <- function(x, ..., arg = caller_arg(x), call = caller_env()) {
+  check_inherits(x, what = "clock_zoned_time", arg = arg, call = call)
+}
+
 # ------------------------------------------------------------------------------
 
 zoned_time_zone_attribute <- function(x) {
@@ -202,9 +206,7 @@ format.clock_zoned_time <- function(x,
                                     format = NULL,
                                     locale = clock_locale(),
                                     abbreviate_zone = FALSE) {
-  if (!is_clock_locale(locale)) {
-    abort("`locale` must be a 'clock_locale' object.")
-  }
+  check_clock_locale(locale)
 
   zone <- zoned_time_zone_attribute(x)
   precision <- zoned_time_precision_attribute(x)
@@ -589,13 +591,14 @@ zoned_time_parse_complete <- function(x,
                                       format = NULL,
                                       precision = "second",
                                       locale = clock_locale()) {
-  check_dots_empty()
+  check_dots_empty0(...)
 
-  precision <- validate_zoned_time_precision_string(precision)
+  check_character(x)
 
-  if (!is_clock_locale(locale)) {
-    abort("`locale` must be a 'clock_locale' object.")
-  }
+  check_zoned_time_precision(precision)
+  precision <- precision_to_integer(precision)
+
+  check_clock_locale(locale)
 
   if (is_null(format)) {
     # Use both %z and %Z
@@ -628,13 +631,14 @@ zoned_time_parse_abbrev <- function(x,
                                     format = NULL,
                                     precision = "second",
                                     locale = clock_locale()) {
-  check_dots_empty()
+  check_dots_empty0(...)
 
-  precision <- validate_zoned_time_precision_string(precision)
+  check_character(x)
 
-  if (!is_clock_locale(locale)) {
-    abort("`locale` must be a 'clock_locale' object.")
-  }
+  check_zoned_time_precision(precision)
+  precision <- precision_to_integer(precision)
+
+  check_clock_locale(locale)
 
   if (is_null(format)) {
     # Like what R POSIXct prints
@@ -858,20 +862,23 @@ as_zoned_time.default <- function(x, ...) {
 
 #' @export
 as_zoned_time.clock_zoned_time <- function(x, ...) {
+  check_dots_empty0(...)
   x
 }
 
 # ------------------------------------------------------------------------------
 
 #' @export
-as_sys_time.clock_zoned_time <- function(x) {
+as_sys_time.clock_zoned_time <- function(x, ...) {
+  check_dots_empty0(...)
   names <- clock_rcrd_names(x)
   precision <- zoned_time_precision_attribute(x)
   new_sys_time_from_fields(x, precision, names)
 }
 
 #' @export
-as_naive_time.clock_zoned_time <- function(x) {
+as_naive_time.clock_zoned_time <- function(x, ...) {
+  check_dots_empty0(...)
   names <- clock_rcrd_names(x)
   zone <- zoned_time_zone_attribute(x)
   precision <- zoned_time_precision_attribute(x)
@@ -908,11 +915,54 @@ as.character.clock_zoned_time <- function(x, ...) {
 #' @examples
 #' x <- zoned_time_now("America/New_York")
 zoned_time_now <- function(zone) {
+  check_zone(zone)
   names <- NULL
   sys_time <- sys_time_now()
   precision <- time_point_precision_attribute(sys_time)
-  zone <- zone_validate(zone)
   new_zoned_time_from_fields(sys_time, precision, zone, names)
+}
+
+# ------------------------------------------------------------------------------
+
+#' Info: zoned-time
+#'
+#' @description
+#' `zoned_time_info()` retrieves a set of low-level information generally not
+#' required for most date-time manipulations. It returns a data frame with the
+#' same columns as [sys_time_info()], but the `begin` and `end` columns are
+#' zoned-times with the same time zone as `x`.
+#'
+#' @param x `[clock_zoned_time]`
+#'
+#'   A zoned-time.
+#'
+#' @return A data frame of low level information.
+#'
+#' @export
+#' @examples
+#' x <- year_month_day(2021, 03, 14, c(01, 03), c(59, 00), c(59, 00))
+#' x <- as_naive_time(x)
+#' x <- as_zoned_time(x, "America/New_York")
+#'
+#' # x[1] is in EST, x[2] is in EDT
+#' x
+#'
+#' info <- zoned_time_info(x)
+#' info
+#'
+#' # `end` can be used to iterate through daylight saving time transitions
+#' zoned_time_info(info$end)
+zoned_time_info <- function(x) {
+  check_zoned_time(x)
+
+  zone <- zoned_time_zone_attribute(x)
+  x <- as_sys_time(x)
+
+  out <- sys_time_info(x, zone)
+  out$begin <- as_zoned_time(out$begin, zone = zone)
+  out$end <- as_zoned_time(out$end, zone = zone)
+
+  out
 }
 
 # ------------------------------------------------------------------------------
@@ -920,13 +970,13 @@ zoned_time_now <- function(zone) {
 #' Get or set the time zone
 #'
 #' @description
-#' `zoned_time_zone()` gets the time zone.
+#' - `zoned_time_zone()` gets the time zone.
 #'
-#' `zoned_time_set_zone()` sets the time zone _without changing the
+#' - `zoned_time_set_zone()` sets the time zone _without changing the
 #' underlying instant_. This means that the result will represent the equivalent
 #' time in the new time zone.
 #'
-#' @param x `[zoned_time / Date / POSIXt]`
+#' @param x `[zoned_time]`
 #'
 #'   A zoned time to get or set the time zone of.
 #'
@@ -935,13 +985,12 @@ zoned_time_now <- function(zone) {
 #'   A valid time zone to switch to.
 #'
 #' @return
-#' `zoned_time_zone()` returns a string containing the time zone.
+#' - `zoned_time_zone()` returns a string containing the time zone.
 #'
-#' `zoned_time_set_zone()` returns `x` with an altered time zone attribute. The
-#' underlying instant is _not_ changed.
+#' - `zoned_time_set_zone()` returns `x` with an altered time zone attribute.
+#' The underlying instant is _not_ changed.
 #'
 #' @name zoned-zone
-#'
 #' @examples
 #' x <- year_month_day(2019, 1, 1)
 #' x <- as_zoned_time(as_naive_time(x), "America/New_York")
@@ -963,23 +1012,15 @@ NULL
 #' @rdname zoned-zone
 #' @export
 zoned_time_zone <- function(x) {
-  UseMethod("zoned_time_zone")
-}
-
-#' @export
-zoned_time_zone.clock_zoned_time <- function(x) {
+  check_zoned_time(x)
   zoned_time_zone_attribute(x)
 }
 
 #' @rdname zoned-zone
 #' @export
 zoned_time_set_zone <- function(x, zone) {
-  UseMethod("zoned_time_set_zone")
-}
-
-#' @export
-zoned_time_set_zone.clock_zoned_time <- function(x, zone) {
-  zone <- zone_validate(zone)
+  check_zoned_time(x)
+  check_zone(zone)
   zoned_time_set_zone_attribute(x, zone)
 }
 
@@ -1000,9 +1041,7 @@ zoned_time_set_zone.clock_zoned_time <- function(x, zone) {
 #' @examples
 #' zoned_time_precision(zoned_time_now("America/New_York"))
 zoned_time_precision <- function(x) {
-  if (!is_zoned_time(x)) {
-    abort("`x` must be a 'clock_zoned_time'.")
-  }
+  check_zoned_time(x)
   precision <- zoned_time_precision_attribute(x)
   precision <- precision_to_string(precision)
   precision
@@ -1012,88 +1051,110 @@ zoned_time_precision <- function(x) {
 
 #' @export
 add_years.clock_zoned_time <- function(x, n, ...) {
-  stop_clock_unsupported_zoned_time_op("add_years")
+  details <- c(
+    i = "Do you need to convert to a calendar first?",
+    i = cli::format_inline(paste0(
+      "Use {.fn as_naive_time} then {.fn as_year_month_day} to convert to a ",
+      "calendar that supports {.fn add_years}."
+    ))
+  )
+  stop_clock_unsupported(x, details = details)
 }
 
 #' @export
 add_quarters.clock_zoned_time <- function(x, n, ...) {
-  stop_clock_unsupported_zoned_time_op("add_quarters")
+  details <- c(
+    i = "Do you need to convert to a calendar first?",
+    i = cli::format_inline(paste0(
+      "Use {.fn as_naive_time} then {.fn as_year_quarter_day} to convert to a ",
+      "calendar that supports {.fn add_quarters}."
+    ))
+  )
+  stop_clock_unsupported(x, details = details)
 }
 
 #' @export
 add_months.clock_zoned_time <- function(x, n, ...) {
-  stop_clock_unsupported_zoned_time_op("add_months")
+  details <- c(
+    i = "Do you need to convert to a calendar first?",
+    i = cli::format_inline(paste0(
+      "Use {.fn as_naive_time} then {.fn as_year_month_day} to convert to a ",
+      "calendar that supports {.fn add_months}."
+    ))
+  )
+  stop_clock_unsupported(x, details = details)
 }
 
 #' @export
 add_weeks.clock_zoned_time <- function(x, n, ...) {
-  stop_clock_unsupported_zoned_time_op("add_weeks")
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
 }
 
 #' @export
 add_days.clock_zoned_time <- function(x, n, ...) {
-  stop_clock_unsupported_zoned_time_op("add_days")
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
 }
 
 #' @export
 add_hours.clock_zoned_time <- function(x, n, ...) {
-  stop_clock_unsupported_zoned_time_op("add_hours")
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
 }
 
 #' @export
 add_minutes.clock_zoned_time <- function(x, n, ...) {
-  stop_clock_unsupported_zoned_time_op("add_minutes")
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
 }
 
 #' @export
 add_seconds.clock_zoned_time <- function(x, n, ...) {
-  stop_clock_unsupported_zoned_time_op("add_seconds")
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
 }
 
 #' @export
 add_milliseconds.clock_zoned_time <- function(x, n, ...) {
-  stop_clock_unsupported_zoned_time_op("add_milliseconds")
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
 }
 
 #' @export
 add_microseconds.clock_zoned_time <- function(x, n, ...) {
-  stop_clock_unsupported_zoned_time_op("add_microseconds")
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
 }
 
 #' @export
 add_nanoseconds.clock_zoned_time <- function(x, n, ...) {
-  stop_clock_unsupported_zoned_time_op("add_nanoseconds")
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
 }
 
 # ------------------------------------------------------------------------------
 
-zone_validate <- function(zone) {
-  if (!is_string(zone)) {
-    abort("`zone` must be a single string.")
+check_zone <- function(x, ..., arg = caller_arg(x), call = caller_env()) {
+  check_string(x, arg = arg, call = call)
+
+  if (zone_is_valid(x)) {
+    return(invisible(NULL))
   }
 
-  if (!zone_is_valid(zone)) {
-    message <- paste0("'", zone, "' is not a known time zone.")
-    abort(message)
-  }
+  message <- c(
+    "{.arg {arg}} must be a valid time zone name.",
+    i = "{.str {x}} is invalid.",
+    i = "Allowed time zone names are listed in {.run clock::tzdb_names()}."
+  )
 
-  zone
+  cli::cli_abort(message, call = call)
 }
 
 # ------------------------------------------------------------------------------
 
-validate_zoned_time_precision_string <- function(precision) {
-  precision <- validate_precision_string(precision)
-
-  if (!is_valid_zoned_time_precision(precision)) {
-    abort("`precision` must be at least 'second' precision.")
-  }
-
-  precision
-}
-
-is_valid_zoned_time_precision <- function(precision) {
-  precision >= PRECISION_SECOND
+check_zoned_time_precision <- function(x,
+                                       ...,
+                                       arg = caller_arg(x),
+                                       call = caller_env()) {
+  check_precision(
+    x = x,
+    values = c("second", "millisecond", "microsecond", "nanosecond"),
+    arg = arg,
+    call = call
+  )
 }
 
 # ------------------------------------------------------------------------------

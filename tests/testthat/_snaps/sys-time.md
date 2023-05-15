@@ -6,7 +6,7 @@
       Warning:
       Failed to parse 1 string at location 1. Returning `NA` at that location.
     Output
-      <time_point<sys><second>[1]>
+      <sys_time<second>[1]>
       [1] NA
 
 # `precision` must be at least second
@@ -14,8 +14,8 @@
     Code
       sys_time_parse_RFC_3339(x, precision = "day")
     Condition
-      Error in `validate_RFC_3339_precision_string()`:
-      ! `precision` must be at least 'second' precision.
+      Error in `sys_time_parse_RFC_3339()`:
+      ! `precision` must be at least "second" precision.
 
 # `separator` is validated
 
@@ -55,7 +55,7 @@
     Code
       sys_time_parse_RFC_3339(x, 1)
     Condition
-      Error in `time_point_parse()`:
+      Error in `sys_time_parse()`:
       ! `...` must be empty.
       x Problematic argument:
       * ..1 = 1
@@ -70,8 +70,34 @@
 
 # empty dots are checked
 
-    `...` must be empty.
-    x Problematic argument:
-    * ..1 = 123
-    i Did you forget to name an argument?
+    Code
+      as_zoned_time(sys_seconds(), "UTC", 123)
+    Condition
+      Error in `as_zoned_time()`:
+      ! `...` must be empty.
+      x Problematic argument:
+      * ..1 = 123
+      i Did you forget to name an argument?
+
+# `vec_ptype_full()` prints correctly
+
+    Code
+      vec_ptype_full(sys_days())
+    Output
+      [1] "sys_time<day>"
+    Code
+      vec_ptype_full(sys_seconds(1:5))
+    Output
+      [1] "sys_time<second>"
+
+# `vec_ptype_abbr()` prints correctly
+
+    Code
+      vec_ptype_abbr(sys_days())
+    Output
+      [1] "sys<day>"
+    Code
+      vec_ptype_abbr(sys_seconds(1:5))
+    Output
+      [1] "sys<second>"
 

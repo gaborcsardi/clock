@@ -64,15 +64,14 @@ weekday <- function(code = integer(), ..., encoding = "western") {
 
   # No other helpers retain names, so we don't here either
   code <- unname(code)
-  code <- vec_cast(code, integer(), x_arg = "code")
+  code <- vec_cast(code, integer())
 
   oob <- (code > 7L | code < 1L) & (!is.na(code))
   if (any(oob)) {
-    message <- paste0("`code` must be in range of [1, 7].")
-    abort(message)
+    abort("`code` must be in range of [1, 7].")
   }
 
-  encoding <- validate_encoding(encoding)
+  encoding <- check_encoding(encoding)
 
   # Store as western encoding
   if (is_iso_encoding(encoding)) {
@@ -84,7 +83,7 @@ weekday <- function(code = integer(), ..., encoding = "western") {
 
 new_weekday <- function(code = integer(), ..., class = NULL) {
   if (!is_integer(code)) {
-    abort("`code` must be an integer vector.")
+    stop_input_type(code, "an integer vector")
   }
 
   new_vctr(
@@ -115,6 +114,10 @@ is_weekday <- function(x) {
   inherits(x, "clock_weekday")
 }
 
+check_weekday <- function(x, ..., arg = caller_arg(x), call = caller_env()) {
+  check_inherits(x, what = "clock_weekday", arg = arg, call = call)
+}
+
 # ------------------------------------------------------------------------------
 
 #' @export
@@ -122,13 +125,9 @@ format.clock_weekday <- function(x, ..., labels = "en", abbreviate = TRUE) {
   if (is_character(labels)) {
     labels <- clock_labels_lookup(labels)
   }
-  if (!is_clock_labels(labels)) {
-    abort("`labels` must be a 'clock_labels' object.")
-  }
+  check_clock_labels(labels)
 
-  if (!is_bool(abbreviate)) {
-    abort("`abbreviate` must be `TRUE` or `FALSE`.")
-  }
+  check_bool(abbreviate)
 
   if (abbreviate) {
     labels <- labels$weekday_abbrev
@@ -176,9 +175,9 @@ vec_cast.clock_weekday.clock_weekday <- function(x, to, ...) {
 
 #' @export
 vec_proxy_compare.clock_weekday <- function(x, ...) {
-  abort(paste0(
-    "Can't compare or order values of the 'clock_weekday' type, ",
-    "as this type does not specify a 'first' day of the week."
+  cli::cli_abort(paste0(
+    "Can't compare or order values of the {.cls clock_weekday} type, ",
+    "as this type does not specify a {.str first} day of the week."
   ))
 }
 
@@ -190,6 +189,8 @@ vec_proxy_compare.clock_weekday <- function(x, ...) {
 #' converting to a weekday from a sys-time or naive-time. You can use this
 #' function along with the _circular arithmetic_ that weekday implements to
 #' easily get to the "next Monday" or "previous Sunday".
+#'
+#' @inheritParams rlang::args_dots_empty
 #'
 #' @param x `[object]`
 #'
@@ -205,18 +206,22 @@ vec_proxy_compare.clock_weekday <- function(x, ...) {
 #' as_weekday(x)
 #'
 #' # See the examples in `?weekday` for more usage.
-as_weekday <- function(x) {
+as_weekday <- function(x, ...) {
   UseMethod("as_weekday")
 }
 
 #' @export
-as_weekday.clock_weekday <- function(x) {
+as_weekday.clock_weekday <- function(x, ...) {
+  check_dots_empty0(...)
   x
 }
 
 #' @export
-as_weekday.clock_calendar <- function(x) {
-  abort("Can't extract the weekday from a calendar. Convert to a time point first.")
+as_weekday.clock_calendar <- function(x, ...) {
+  abort(c(
+    "Can't extract the weekday from a calendar.",
+    i = "Do you need to convert to a time point first?"
+  ))
 }
 
 # ------------------------------------------------------------------------------
@@ -250,13 +255,10 @@ as.character.clock_weekday <- function(x, ...) {
 #' weekday_code(x, encoding = "western")
 #' weekday_code(x, encoding = "iso")
 weekday_code <- function(x, ..., encoding = "western") {
-  check_dots_empty()
+  check_dots_empty0(...)
+  check_weekday(x)
 
-  if (!is_weekday(x)) {
-    abort("`x` must be a 'clock_weekday'.")
-  }
-
-  encoding <- validate_encoding(encoding)
+  encoding <- check_encoding(encoding)
 
   x <- unstructure(x)
 
@@ -315,22 +317,15 @@ weekday_factor <- function(x,
                            labels = "en",
                            abbreviate = TRUE,
                            encoding = "western") {
-  check_dots_empty()
-
-  if (!is_weekday(x)) {
-    abort("`x` must be a 'clock_weekday' object.")
-  }
+  check_dots_empty0(...)
+  check_weekday(x)
 
   if (is_character(labels)) {
     labels <- clock_labels_lookup(labels)
   }
-  if (!is_clock_labels(labels)) {
-    abort("`labels` must be a 'clock_labels' object.")
-  }
+  check_clock_labels(labels)
 
-  if (!is_bool(abbreviate)) {
-    abort("`abbreviate` must be `TRUE` or `FALSE`.")
-  }
+  check_bool(abbreviate)
 
   if (abbreviate) {
     labels <- labels$weekday_abbrev
@@ -338,7 +333,7 @@ weekday_factor <- function(x,
     labels <- labels$weekday
   }
 
-  encoding <- validate_encoding(encoding)
+  encoding <- check_encoding(encoding)
   x <- weekday_code(x, encoding = encoding)
 
   if (is_iso_encoding(encoding)) {
@@ -450,9 +445,10 @@ weekday_minus_weekday <- function(op, x, y, ...) {
 #' usage.
 #'
 #' @details
-#' `x` and `n` are recycled against each other.
+#' `x` and `n` are recycled against each other using
+#' [tidyverse recycling rules][vctrs::vector_recycling_rules].
 #'
-#' @inheritParams add_years
+#' @inheritParams clock-arithmetic
 #'
 #' @param x `[clock_weekday]`
 #'
@@ -505,7 +501,7 @@ weekday_is_nan <- function(x) {
 }
 
 weekday_is_finite <- function(x) {
-  !vec_equal_na(x)
+  !vec_detect_missing(x)
 }
 
 weekday_is_infinite <- function(x) {
@@ -514,11 +510,8 @@ weekday_is_infinite <- function(x) {
 
 # ------------------------------------------------------------------------------
 
-validate_encoding <- function(encoding) {
-  if (!is_string(encoding, string = c("western", "iso"))) {
-    abort("`encoding` must be one of \"western\" or \"iso\".")
-  }
-  encoding
+check_encoding <- function(encoding, ..., error_call = caller_env()) {
+  arg_match0(encoding, c("western", "iso"), error_call = error_call)
 }
 
 is_iso_encoding <- function(encoding) {

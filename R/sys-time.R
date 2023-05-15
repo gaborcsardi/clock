@@ -36,6 +36,10 @@ is_sys_time <- function(x) {
   inherits(x, "clock_sys_time")
 }
 
+check_sys_time <- function(x, ..., arg = caller_arg(x), call = caller_env()) {
+  check_inherits(x, what = "clock_sys_time", arg = arg, call = call)
+}
+
 # ------------------------------------------------------------------------------
 
 #' Parsing: sys-time
@@ -206,11 +210,12 @@ sys_time_parse <- function(x,
                            format = NULL,
                            precision = "second",
                            locale = clock_locale()) {
-  precision <- validate_time_point_precision_string(precision)
+  check_dots_empty0(...)
+  check_time_point_precision(precision)
+  precision <- precision_to_integer(precision)
 
   fields <- time_point_parse(
     x = x,
-    ...,
     format = format,
     precision = precision,
     locale = locale,
@@ -227,22 +232,26 @@ sys_time_parse_RFC_3339 <- function(x,
                                     separator = "T",
                                     offset = "Z",
                                     precision = "second") {
-  separator <- arg_match0(separator, values = c("T", "t", " "), arg_nm = "separator")
-  offset <- arg_match0(offset, values = c("Z", "z", "%z", "%Ez"), arg_nm = "offset")
+  separator <- arg_match0(separator, values = c("T", "t", " "))
+  offset <- arg_match0(offset, values = c("Z", "z", "%z", "%Ez"))
 
   format <- paste0("%Y-%m-%d", separator, "%H:%M:%S", offset)
 
   # Only used for error checking
-  validate_RFC_3339_precision_string(precision)
+  check_RFC_3339_precision_string(precision)
 
   sys_time_parse(x, ..., format = format, precision = precision)
 }
 
-validate_RFC_3339_precision_string <- function(precision) {
-  precision <- validate_precision_string(precision)
+check_RFC_3339_precision_string <- function(precision, call = caller_env()) {
+  check_precision(precision, call = call)
+  precision <- precision_to_integer(precision)
 
   if (!is_valid_RFC_3339_precision(precision)) {
-    abort("`precision` must be at least 'second' precision.")
+    cli::cli_abort(
+      "{.arg precision} must be at least {.str second} precision.",
+      call = call
+    )
   }
 
   precision
@@ -279,6 +288,8 @@ is_valid_RFC_3339_precision <- function(precision) {
 #' retain the underlying duration, but will change the printed time if the
 #' zone was not already UTC.
 #'
+#' @inheritParams rlang::args_dots_empty
+#'
 #' @param x `[object]`
 #'
 #'   An object to convert to a sys-time.
@@ -307,24 +318,26 @@ is_valid_RFC_3339_precision <- function(precision) {
 #'
 #' ymd <- set_day(ym, 10)
 #' as_sys_time(ymd)
-as_sys_time <- function(x) {
+as_sys_time <- function(x, ...) {
   UseMethod("as_sys_time")
 }
 
 #' @export
-as_sys_time.clock_sys_time <- function(x) {
-  x
+as_sys_time.default <- function(x, ...) {
+  stop_clock_unsupported(x)
 }
 
 #' @export
-as_sys_time.clock_calendar <- function(x) {
-  stop_clock_unsupported_calendar_op("as_sys_time")
+as_sys_time.clock_sys_time <- function(x, ...) {
+  check_dots_empty0(...)
+  x
 }
 
 # ------------------------------------------------------------------------------
 
 #' @export
-as_naive_time.clock_sys_time <- function(x) {
+as_naive_time.clock_sys_time <- function(x, ...) {
+  check_dots_empty0(...)
   new_naive_time_from_fields(x, time_point_precision_attribute(x), clock_rcrd_names(x))
 }
 
@@ -370,9 +383,9 @@ as_naive_time.clock_sys_time <- function(x) {
 #' x_ny <- as_zoned_time(x, "America/New_York")
 #' x_ny
 as_zoned_time.clock_sys_time <- function(x, zone, ...) {
-  check_dots_empty()
+  check_dots_empty0(...)
 
-  zone <- zone_validate(zone)
+  check_zone(zone)
 
   # Promote to at least seconds precision for `zoned_time`
   x <- vec_cast(x, vec_ptype2(x, clock_empty_sys_time_second))
@@ -504,9 +517,8 @@ sys_time_now <- function() {
 #'   naive_time = x_sys[1] + info2$offset
 #' )
 sys_time_info <- function(x, zone) {
-  if (!is_sys_time(x)) {
-    abort("`x` must be a sys-time.")
-  }
+  check_sys_time(x)
+  check_character(zone)
 
   precision <- time_point_precision_attribute(x)
 
@@ -528,6 +540,18 @@ new_sys_time_info_from_fields <- function(fields) {
   fields[["offset"]] <- new_duration_from_fields(fields[["offset"]], PRECISION_SECOND, names)
 
   new_data_frame(fields)
+}
+
+# ------------------------------------------------------------------------------
+
+#' @export
+vec_ptype_full.clock_sys_time <- function(x, ...) {
+  time_point_ptype(x, type = "full")
+}
+
+#' @export
+vec_ptype_abbr.clock_sys_time <- function(x, ...) {
+  time_point_ptype(x, type = "abbr")
 }
 
 # ------------------------------------------------------------------------------

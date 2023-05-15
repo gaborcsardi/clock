@@ -62,10 +62,29 @@ cast_calendar_to_calendar <- function(x, to, ...) {
 
 #' Is the calendar year a leap year?
 #'
-#' `calendar_leap_year()` detects if the year is a leap year according to
-#' the Gregorian calendar. It is only relevant for calendar types that use
-#' a Gregorian year, i.e. [year_month_day()], [year_month_weekday()], and
-#' [year_day()].
+#' @description
+#' `calendar_leap_year()` detects if the calendar year is a leap year - i.e.
+#' does it contain one or more extra components than other years?
+#'
+#' A particular year is a leap year if:
+#'
+#' - [year_month_day()]: February has 29 days.
+#'
+#' - [year_month_weekday()]: February has a weekday that occurs 5 times.
+#'
+#' - [year_week_day()]: There are 53 weeks in the year, resulting in 371
+#'   days in the year.
+#'
+#' - [iso_year_week_day()]: There are 53 weeks in the year, resulting in 371
+#'   days in the year.
+#'
+#' - [year_quarter_day()]: One of the quarters has 1 more day than normal (the
+#'   quarter with an extra day depends on the `start` used, but will always be
+#'   the same for a particular `start`). This aligns with Gregorian leap years
+#'   for all `start`s except February, in which case the leap year is always 1
+#'   year after the Gregorian leap year.
+#'
+#' - [year_day()]: There are 366 days in the year.
 #'
 #' @param x `[calendar]`
 #'
@@ -74,17 +93,37 @@ cast_calendar_to_calendar <- function(x, to, ...) {
 #' @return A logical vector the same size as `x`. Returns `TRUE` if in a leap
 #'   year, `FALSE` if not in a leap year, and `NA` if `x` is `NA`.
 #'
+#' @export
 #' @examples
 #' x <- year_month_day(c(2019:2024, NA))
 #' calendar_leap_year(x)
-#' @export
+#'
+#' # For year-quarter-day, the leap year typically aligns with the Gregorian
+#' # leap year, unless the `start` is February, in which case the leap year is
+#' # always 1 year after the Gregorian leap year
+#' x <- year_quarter_day(2020:2021, start = clock_months$january)
+#' calendar_leap_year(x)
+#'
+#' x <- year_quarter_day(2020:2021, start = clock_months$february)
+#' calendar_leap_year(x)
+#'
+#' # With a January start, 2020 has the extra day
+#' get_day(year_quarter_day(2020, 1:4, "last", start = clock_months$january))
+#' get_day(year_quarter_day(2021, 1:4, "last", start = clock_months$january))
+#' get_day(year_quarter_day(2022, 1:4, "last", start = clock_months$january))
+#'
+#' # With a February start, 2021 has the extra day
+#' get_day(year_quarter_day(2020, 1:4, "last", start = clock_months$february))
+#' get_day(year_quarter_day(2021, 1:4, "last", start = clock_months$february))
+#' get_day(year_quarter_day(2022, 1:4, "last", start = clock_months$february))
 calendar_leap_year <- function(x) {
+  check_calendar(x)
   UseMethod("calendar_leap_year")
 }
 
 #' @export
 calendar_leap_year.clock_calendar <- function(x) {
-  stop_clock_unsupported_calendar_op("calendar_leap_year")
+  stop_clock_unsupported(x)
 }
 
 # ------------------------------------------------------------------------------
@@ -126,6 +165,7 @@ calendar_month_factor <- function(x,
                                   ...,
                                   labels = "en",
                                   abbreviate = FALSE) {
+  check_calendar(x)
   UseMethod("calendar_month_factor")
 }
 
@@ -134,26 +174,26 @@ calendar_month_factor.clock_calendar <- function(x,
                                                  ...,
                                                  labels = "en",
                                                  abbreviate = FALSE) {
-  stop_clock_unsupported_calendar_op("calendar_month_factor")
+  stop_clock_unsupported(x)
 }
 
-calendar_month_factor_impl <- function(x, labels, abbreviate, ...) {
-  check_dots_empty()
+calendar_month_factor_impl <- function(x,
+                                       labels,
+                                       abbreviate,
+                                       ...,
+                                       error_call = caller_env()) {
+  check_dots_empty0(...)
 
   if (calendar_precision_attribute(x) < PRECISION_MONTH) {
-    abort("`x` must have at least 'month' precision.")
+    cli::cli_abort("{.arg x} must have at least {.str month} precision.", call = error_call)
   }
 
   if (is_character(labels)) {
     labels <- clock_labels_lookup(labels)
   }
-  if (!is_clock_labels(labels)) {
-    abort("`labels` must be a 'clock_labels' object.")
-  }
+  check_clock_labels(labels, call = error_call)
 
-  if (!is_bool(abbreviate)) {
-    abort("`abbreviate` must be `TRUE` or `FALSE`.")
-  }
+  check_bool(abbreviate, call = error_call)
 
   if (abbreviate) {
     labels <- labels$month_abbrev
@@ -184,6 +224,8 @@ calendar_month_factor_impl <- function(x, labels, abbreviate, ...) {
 #' - [year-month-day][year-month-day-group]
 #'
 #' - [year-month-weekday][year-month-weekday-group]
+#'
+#' - [year-week-day][year-week-day-group]
 #'
 #' - [iso-year-week-day][iso-year-week-day-group]
 #'
@@ -219,16 +261,13 @@ calendar_month_factor_impl <- function(x, labels, abbreviate, ...) {
 #' # Group by two days of the month
 #' calendar_group(x, "day", n = 2)
 calendar_group <- function(x, precision, ..., n = 1L) {
-  check_dots_empty()
+  check_dots_empty0(...)
 
-  precision <- validate_precision_string(precision)
+  check_calendar(x)
 
-  if (!calendar_is_valid_precision(x, precision)) {
-    message <- paste0(
-      "`precision` must be a valid precision for a '", calendar_name(x), "'."
-    )
-    abort(message)
-  }
+  check_precision(precision)
+  precision <- precision_to_integer(precision)
+  calendar_check_precision(x, precision)
 
   x_precision <- calendar_precision_attribute(x)
 
@@ -237,10 +276,10 @@ calendar_group <- function(x, precision, ..., n = 1L) {
     x_precision <- precision_to_string(x_precision)
 
     message <- paste0(
-      "Can't group at a precision (", precision, ") ",
-      "that is more precise than `x` (", x_precision, ")."
+      "Can't group at a precision ({.str {precision}}) ",
+      "that is more precise than `x` ({.str {x_precision}})."
     )
-    abort(message)
+    cli::cli_abort(message)
   }
 
   if (precision > PRECISION_SECOND && x_precision != precision) {
@@ -250,10 +289,10 @@ calendar_group <- function(x, precision, ..., n = 1L) {
     x_precision <- precision_to_string(x_precision)
 
     message <- paste0(
-      "Can't group a subsecond precision `x` (", x_precision, ") ",
-      "by another subsecond precision (", precision, ")."
+      "Can't group a subsecond precision `x` ({.str {x_precision}}) ",
+      "by another subsecond precision ({.str {precision}})."
     )
-    abort(message)
+    cli::cli_abort(message)
   }
 
   UseMethod("calendar_group")
@@ -261,7 +300,7 @@ calendar_group <- function(x, precision, ..., n = 1L) {
 
 #' @export
 calendar_group.clock_calendar <- function(x, precision, ..., n = 1L) {
-  stop_clock_unsupported_calendar_op("calendar_group")
+  stop_clock_unsupported(x)
 }
 
 calendar_group_time <- function(x, n, precision) {
@@ -305,7 +344,7 @@ calendar_group_time <- function(x, n, precision) {
     return(x)
   }
 
-  abort("Internal error: Unknown precision.")
+  abort("Unknown precision.", .internal = TRUE)
 }
 
 group_component0 <- function(x, n) {
@@ -315,14 +354,9 @@ group_component1 <- function(x, n) {
   ((x - 1L) %/% n) * n + 1L
 }
 
-validate_calendar_group_n <- function(n) {
-  n <- vec_cast(n, integer(), x_arg = "n")
-  if (!is_number(n)) {
-    abort("`n` must be a single number.")
-  }
-  if (n <= 0L) {
-    abort("`n` must be a positive number.")
-  }
+validate_calendar_group_n <- function(n, ..., error_call = caller_env()) {
+  check_number_whole(n, min = 0, call = error_call)
+  n <- vec_cast(n, integer(), call = error_call)
   n
 }
 
@@ -341,6 +375,8 @@ validate_calendar_group_n <- function(n) {
 #' - [year-month-day][year-month-day-narrow]
 #'
 #' - [year-month-weekday][year-month-weekday-narrow]
+#'
+#' - [year-week-day][year-week-day-narrow]
 #'
 #' - [iso-year-week-day][iso-year-week-day-narrow]
 #'
@@ -373,14 +409,11 @@ validate_calendar_group_n <- function(n) {
 #' # Or month precision
 #' calendar_narrow(x, "month")
 calendar_narrow <- function(x, precision) {
-  precision <- validate_precision_string(precision)
+  check_calendar(x)
 
-  if (!calendar_is_valid_precision(x, precision)) {
-    message <- paste0(
-      "`precision` must be a valid precision for a '", calendar_name(x), "'."
-    )
-    abort(message)
-  }
+  check_precision(precision)
+  precision <- precision_to_integer(precision)
+  calendar_check_precision(x, precision)
 
   x_precision <- calendar_precision_attribute(x)
 
@@ -389,10 +422,10 @@ calendar_narrow <- function(x, precision) {
     x_precision <- precision_to_string(x_precision)
 
     message <- paste0(
-      "Can't narrow to a precision (", precision, ") ",
-      "that is wider than `x` (", x_precision, ")."
+      "Can't narrow to a precision ({.str {precision}}) ",
+      "that is wider than `x` ({.str {x_precision}})."
     )
-    abort(message)
+    cli::cli_abort(message)
   }
 
   if (precision > PRECISION_SECOND && x_precision != precision) {
@@ -402,10 +435,10 @@ calendar_narrow <- function(x, precision) {
     x_precision <- precision_to_string(x_precision)
 
     message <- paste0(
-      "Can't narrow a subsecond precision `x` (", x_precision, ") ",
-      "to another subsecond precision (", precision, ")."
+      "Can't narrow a subsecond precision `x` ({.str {x_precision}}) ",
+      "to another subsecond precision ({.str {precision}})."
     )
-    abort(message)
+    cli::cli_abort(message)
   }
 
   UseMethod("calendar_narrow")
@@ -413,7 +446,7 @@ calendar_narrow <- function(x, precision) {
 
 #' @export
 calendar_narrow.clock_calendar <- function(x, precision) {
-  stop_clock_unsupported_calendar_op("calendar_narrow")
+  stop_clock_unsupported(x)
 }
 
 calendar_narrow_time <- function(out_fields, out_precision, x_fields) {
@@ -447,6 +480,8 @@ calendar_narrow_time <- function(out_fields, out_precision, x_fields) {
 #' - [year-month-day][year-month-day-widen]
 #'
 #' - [year-month-weekday][year-month-weekday-widen]
+#'
+#' - [year-week-day][year-week-day-widen]
 #'
 #' - [iso-year-week-day][iso-year-week-day-widen]
 #'
@@ -485,14 +520,11 @@ calendar_narrow_time <- function(out_fields, out_precision, x_fields) {
 #' # Or second precision
 #' calendar_widen(x, "second")
 calendar_widen <- function(x, precision) {
-  precision <- validate_precision_string(precision)
+  check_calendar(x)
 
-  if (!calendar_is_valid_precision(x, precision)) {
-    message <- paste0(
-      "`precision` must be a valid precision for a '", calendar_name(x), "'."
-    )
-    abort(message)
-  }
+  check_precision(precision)
+  precision <- precision_to_integer(precision)
+  calendar_check_precision(x, precision)
 
   x_precision <- calendar_precision_attribute(x)
 
@@ -501,10 +533,10 @@ calendar_widen <- function(x, precision) {
     x_precision <- precision_to_string(x_precision)
 
     message <- paste0(
-      "Can't widen to a precision (", precision, ") ",
-      "that is narrower than `x` (", x_precision, ")."
+      "Can't widen to a precision ({.str {precision}}) ",
+      "that is narrower than `x` ({.str {x_precision}})."
     )
-    abort(message)
+    cli::cli_abort(message)
   }
 
   if (x_precision > PRECISION_SECOND && x_precision != precision) {
@@ -514,10 +546,10 @@ calendar_widen <- function(x, precision) {
     x_precision <- precision_to_string(x_precision)
 
     message <- paste0(
-      "Can't widen a subsecond precision `x` (", x_precision, ") ",
-      "to another subsecond precision (", precision, ")."
+      "Can't widen a subsecond precision `x` ({.str {x_precision}}) ",
+      "to another subsecond precision ({.str {precision}})."
     )
-    abort(message)
+    cli::cli_abort(message)
   }
 
   UseMethod("calendar_widen")
@@ -525,7 +557,7 @@ calendar_widen <- function(x, precision) {
 
 #' @export
 calendar_widen.clock_calendar <- function(x, precision) {
-  stop_clock_unsupported_calendar_op("calendar_widen")
+  stop_clock_unsupported(x)
 }
 
 calendar_widen_time <- function(x, x_precision, precision) {
@@ -575,6 +607,8 @@ calendar_widen_time <- function(x, x_precision, precision) {
 #'
 #' - [year-month-weekday][year-month-weekday-boundary]
 #'
+#' - [year-week-day][year-week-day-boundary]
+#'
 #' - [iso-year-week-day][iso-year-week-day-boundary]
 #'
 #' - [year-quarter-day][year-quarter-day-boundary]
@@ -603,44 +637,41 @@ NULL
 #' @rdname calendar-boundary
 #' @export
 calendar_start <- function(x, precision) {
+  check_calendar(x)
   UseMethod("calendar_start")
 }
 
 #' @export
 calendar_start.clock_calendar <- function(x, precision) {
-  stop_clock_unsupported_calendar_op("calendar_start")
+  stop_clock_unsupported(x)
 }
 
 
 #' @rdname calendar-boundary
 #' @export
 calendar_end <- function(x, precision) {
+  check_calendar(x)
   UseMethod("calendar_end")
 }
 
 #' @export
 calendar_end.clock_calendar <- function(x, precision) {
-  stop_clock_unsupported_calendar_op("calendar_end")
+  stop_clock_unsupported(x)
 }
 
 
 calendar_start_end_checks <- function(x, x_precision, precision, which) {
-  if (!calendar_is_valid_precision(x, precision)) {
-    message <- paste0(
-      "`precision` must be a valid precision for a '", calendar_name(x), "'."
-    )
-    abort(message)
-  }
+  calendar_check_precision(x, precision)
 
   if (x_precision < precision) {
     precision <- precision_to_string(precision)
     x_precision <- precision_to_string(x_precision)
 
     message <- paste0(
-      "Can't compute the ", which, " of `x` (", x_precision, ") ",
-      "at a more precise precision (", precision, ")."
+      "Can't compute the {which} of `x` ({.str {x_precision}}) ",
+      "at a more precise precision ({.str {precision}})."
     )
-    abort(message)
+    cli::cli_abort(message)
   }
 
   if (precision > PRECISION_SECOND && x_precision != precision) {
@@ -651,10 +682,10 @@ calendar_start_end_checks <- function(x, x_precision, precision, which) {
     x_precision <- precision_to_string(x_precision)
 
     message <- paste0(
-      "Can't compute the ", which, " of a subsecond precision `x` (", x_precision, ") ",
-      "at another subsecond precision (", precision, ")."
+      "Can't compute the {which} of a subsecond precision `x` ({.str {x_precision}}) ",
+      "at another subsecond precision ({.str {precision}})."
     )
-    abort(message)
+    cli::cli_abort(message)
   }
 
   invisible(x)
@@ -729,6 +760,8 @@ calendar_start_end_time <- function(x, x_precision, precision, values) {
 #'
 #' - [year-month-weekday][year-month-weekday-count-between]
 #'
+#' - [year-week-day][year-week-day-count-between]
+#'
 #' - [iso-year-week-day][iso-year-week-day-count-between]
 #'
 #' - [year-quarter-day][year-quarter-day-count-between]
@@ -769,6 +802,7 @@ calendar_count_between <- function(start,
                                    precision,
                                    ...,
                                    n = 1L) {
+  check_calendar(start)
   UseMethod("calendar_count_between")
 }
 
@@ -778,11 +812,8 @@ calendar_count_between.clock_calendar <- function(start,
                                                   precision,
                                                   ...,
                                                   n = 1L) {
-  check_dots_empty()
-
-  if (!is_calendar(end)) {
-    abort("`end` must be a <clock_calendar>.")
-  }
+  check_dots_empty0(...)
+  check_calendar(end)
 
   size <- vec_size_common(start = start, end = end)
 
@@ -791,15 +822,21 @@ calendar_count_between.clock_calendar <- function(start,
   start <- args[[1]]
   end <- args[[2]]
 
-  n <- vec_cast(n, integer(), x_arg = "n")
-  if (!is_number(n) || n <= 0L) {
-    abort("`n` must be a single positive integer.")
-  }
+  check_number_whole(n, min = 0)
+  n <- vec_cast(n, integer())
 
-  precision_int <- validate_precision_string(precision)
+  check_precision(precision)
+  precision_int <- precision_to_integer(precision)
 
   if (calendar_precision_attribute(start) < precision_int) {
-    abort("Precision of inputs must be at least as precise as `precision`.")
+    start_precision <- precision_to_string(calendar_precision_attribute(start))
+
+    message <- paste0(
+      "Precision of inputs ({.str {start_precision}}) must be at least as precise ",
+      "as {.arg precision} ({.str {precision}})."
+    )
+
+    cli::cli_abort(message)
   }
 
   args <- calendar_count_between_standardize_precision_n(start, precision, n)
@@ -855,6 +892,59 @@ calendar_count_between_proxy_compare <- function(start, end, precision) {
 
 # ------------------------------------------------------------------------------
 
+#' Spanning sequence: calendars
+#'
+#' @description
+#' `calendar_spanning_seq()` generates a regular sequence along the span of
+#' `x`, i.e. along `[min(x), max(x)]`. The sequence is generated at the
+#' precision of `x`.
+#'
+#' Importantly, sequences can only be generated if the underlying [seq()] method
+#' for the calendar in question supports a `from` and `to` value at the same
+#' precision as `x`. For example, you can't compute a day precision spanning
+#' sequence for a [year_month_day()] calendar (you can only compute a year
+#' and month one). To create a day precision sequence, you'd have to convert to
+#' a time-point first. See the individual [seq()] method documentation to learn
+#' what precisions are allowed.
+#'
+#' @details
+#' Missing values are automatically removed before the sequence is generated.
+#'
+#' If you need more precise sequence generation, call [range()] and [seq()]
+#' directly.
+#'
+#' @param x `[clock_calendar]`
+#'
+#'   A calendar vector.
+#'
+#' @return A sequence along `[min(x), max(x)]`.
+#'
+#' @export
+#' @examples
+#' x <- year_month_day(c(2019, 2022, 2020), c(2, 5, 3))
+#' x
+#'
+#' # Month precision spanning sequence
+#' calendar_spanning_seq(x)
+#'
+#' # Quarter precision:
+#' x <- year_quarter_day(c(2005, 2006, 2003), c(4, 2, 3))
+#' calendar_spanning_seq(x)
+#'
+#' # Can't generate sequences if `seq()` doesn't allow the precision
+#' x <- year_month_day(2019, c(1, 2, 1), c(20, 3, 25))
+#' try(calendar_spanning_seq(x))
+#'
+#' # Generally this means you need to convert to a time point and use
+#' # `time_point_spanning_seq()` instead
+#' time_point_spanning_seq(as_sys_time(x))
+calendar_spanning_seq <- function(x) {
+  check_calendar(x)
+  spanning_seq_impl(x)
+}
+
+# ------------------------------------------------------------------------------
+
 #' Precision: calendar
 #'
 #' `calendar_precision()` extracts the precision from a calendar object. It
@@ -872,6 +962,7 @@ calendar_count_between_proxy_compare <- function(start, end, precision) {
 #' calendar_precision(year_month_day(2019, 1, 1))
 #' calendar_precision(year_quarter_day(2019, 3))
 calendar_precision <- function(x) {
+  check_calendar(x)
   UseMethod("calendar_precision")
 }
 
@@ -892,8 +983,21 @@ calendar_name <- function(x) {
 # ------------------------------------------------------------------------------
 
 # Internal generic
-calendar_is_valid_precision <- function(x, precision) {
-  UseMethod("calendar_is_valid_precision")
+calendar_is_precision <- function(x, precision) {
+  UseMethod("calendar_is_precision")
+}
+
+calendar_check_precision <- function(x, precision, ..., error_call = caller_env()) {
+  if (calendar_is_precision(x, precision)) {
+    return(invisible(NULL))
+  }
+
+  message <- paste0(
+    "{.arg precision} must be a valid precision for a {.cls {calendar_name(x)}}, ",
+    "not {.str {precision_to_string(precision)}}."
+  )
+
+  cli::cli_abort(message, call = error_call)
 }
 
 # ------------------------------------------------------------------------------
@@ -904,66 +1008,82 @@ calendar_precision_attribute <- function(x) {
 
 # ------------------------------------------------------------------------------
 
-calendar_require_minimum_precision <- function(x, precision, fn) {
-  if (!calendar_has_minimum_precision(x, precision)) {
-    precision_string <- precision_to_string(precision)
-    msg <- paste0("`", fn, "()` requires a minimum precision of '", precision_string, "'.")
-    abort(msg)
+calendar_check_minimum_precision <- function(x,
+                                             precision,
+                                             ...,
+                                             arg = caller_arg(x),
+                                             call = caller_env()) {
+  x_precision <- calendar_precision_attribute(x)
+
+  if (x_precision >= precision) {
+    return(invisible(NULL))
   }
-  invisible(x)
-}
-calendar_has_minimum_precision <- function(x, precision) {
-  calendar_precision_attribute(x) >= precision
+
+  message <- c(
+    "Can't perform this operation because of the precision of {.arg {arg}}.",
+    i = "The precision of {.arg {arg}} must be at least {.str {precision_to_string(precision)}}.",
+    i = "{.arg {arg}} has a precision of {.str {precision_to_string(x_precision)}}."
+  )
+
+  cli::cli_abort(message, call = call)
 }
 
-calendar_require_precision <- function(x, precision, fn) {
-  if (!calendar_has_precision(x, precision)) {
-    precision_string <- precision_to_string(precision)
-    msg <- paste0("`", fn, "()` requires a precision of '", precision_string, "'.")
-    abort(msg)
+calendar_check_exact_precision <- function(x,
+                                           precision,
+                                           ...,
+                                           arg = caller_arg(x),
+                                           call = caller_env()) {
+  x_precision <- calendar_precision_attribute(x)
+
+  if (x_precision %in% precision) {
+    return(invisible(NULL))
   }
-  invisible(x)
-}
-calendar_require_any_of_precisions <- function(x, precisions, fn) {
-  results <- vapply(precisions, calendar_has_precision, FUN.VALUE = logical(1), x = x)
-  if (!any(results)) {
-    precision_string <- precision_to_string(calendar_precision_attribute(x))
-    msg <- paste0("`", fn, "()` does not support a precision of '", precision_string, "'.")
-    abort(msg)
-  }
-  invisible(x)
-}
-calendar_has_precision <- function(x, precision) {
-  calendar_precision_attribute(x) == precision
+
+  precision <- vapply(precision, precision_to_string, character(1))
+
+  message <- c(
+    "Can't perform this operation because of the precision of {.arg {arg}}.",
+    i = "The precision of {.arg {arg}} must be {.or {.str {precision}}}.",
+    i = "{.arg {arg}} has a precision of {.str {precision_to_string(x_precision)}}."
+  )
+
+  cli::cli_abort(message, call = call)
 }
 
 # For use in calendar constructor helpers
-calendar_validate_subsecond_precision <- function(subsecond_precision) {
+calendar_check_subsecond_precision <- function(subsecond_precision,
+                                               ...,
+                                               call = caller_env()) {
   if (is_null(subsecond_precision)) {
-    abort("If `subsecond` is provided, `subsecond_precision` must be specified.")
+    cli::cli_abort(
+      "When {.arg subsecond} is provided, {.arg subsecond_precision} must also be specified.",
+      call = call
+    )
   }
 
-  subsecond_precision <- validate_precision_string(subsecond_precision, "subsecond_precision")
-
-  if (!is_valid_subsecond_precision(subsecond_precision)) {
-    abort("`subsecond_precision` must be a valid subsecond precision.")
-  }
-
-  subsecond_precision
+  check_precision_subsecond(subsecond_precision, call = call)
 }
 
 # ------------------------------------------------------------------------------
 
-calendar_require_all_valid <- function(x) {
-  if (invalid_any(x)) {
-    message <- paste0(
-      "Conversion from a calendar requires that all dates are valid. ",
-      "Resolve invalid dates by calling `invalid_resolve()`."
-    )
-    abort(message)
+calendar_check_no_invalid <- function(x,
+                                      ...,
+                                      arg = caller_arg(x),
+                                      call = caller_env()) {
+  if (!invalid_any(x)) {
+    return(invisible(NULL))
   }
 
-  invisible(x)
+  loc <- invalid_detect(x)
+  loc <- which(loc)
+
+  message <- c(
+    "Can't convert {.arg {arg}} to another type because some dates are invalid.",
+    i = "The following locations are invalid: {loc}.",
+    i = "Resolve invalid dates with {.fn invalid_resolve}."
+  )
+
+  cli::cli_abort(message, call = call)
 }
 
 # ------------------------------------------------------------------------------
@@ -1038,28 +1158,102 @@ arith_numeric_and_calendar <- function(op, x, y, ...) {
 # ------------------------------------------------------------------------------
 
 #' @export
-as_year_month_day.clock_calendar <- function(x) {
+as_year_month_day.clock_calendar <- function(x, ...) {
+  check_dots_empty0(...)
   as_year_month_day(as_sys_time(x))
 }
 
 #' @export
-as_year_month_weekday.clock_calendar <- function(x) {
+as_year_month_weekday.clock_calendar <- function(x, ...) {
+  check_dots_empty0(...)
   as_year_month_weekday(as_sys_time(x))
 }
 
 #' @export
-as_iso_year_week_day.clock_calendar <- function(x) {
+as_year_week_day.clock_calendar <- function(x, ..., start = NULL) {
+  check_dots_empty0(...)
+  as_year_week_day(as_sys_time(x), start = start)
+}
+
+#' @export
+as_iso_year_week_day.clock_calendar <- function(x, ...) {
+  check_dots_empty0(...)
   as_iso_year_week_day(as_sys_time(x))
 }
 
 #' @export
-as_year_day.clock_calendar <- function(x) {
+as_year_day.clock_calendar <- function(x, ...) {
+  check_dots_empty0(...)
   as_year_day(as_sys_time(x))
 }
 
 #' @export
 as_year_quarter_day.clock_calendar <- function(x, ..., start = NULL) {
-  as_year_quarter_day(as_sys_time(x), ..., start = start)
+  check_dots_empty0(...)
+  as_year_quarter_day(as_sys_time(x), start = start)
+}
+
+# ------------------------------------------------------------------------------
+
+#' @export
+add_weeks.clock_calendar <- function(x, n, ...) {
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
+}
+
+#' @export
+add_days.clock_calendar <- function(x, n, ...) {
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
+}
+
+#' @export
+add_hours.clock_calendar <- function(x, n, ...) {
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
+}
+
+#' @export
+add_minutes.clock_calendar <- function(x, n, ...) {
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
+}
+
+#' @export
+add_seconds.clock_calendar <- function(x, n, ...) {
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
+}
+
+#' @export
+add_milliseconds.clock_calendar <- function(x, n, ...) {
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
+}
+
+#' @export
+add_microseconds.clock_calendar <- function(x, n, ...) {
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
+}
+
+#' @export
+add_nanoseconds.clock_calendar <- function(x, n, ...) {
+  stop_clock_unsupported(x, details = advice_convert_to_time_point())
+}
+
+advice_convert_to_time_point <- function() {
+  c(
+    i = "Do you need to convert to a time point first?",
+    i = cli::format_inline("Use {.fn as_naive_time} or {.fn as_sys_time} to convert to a time point.")
+  )
+}
+
+# ------------------------------------------------------------------------------
+
+calendar_minimum <- function(precision, year) {
+  out <- calendar_widen(year, precision)
+  out <- calendar_start(out, "year")
+  out
+}
+
+calendar_maximum <- function(precision, year) {
+  out <- calendar_widen(year, precision)
+  out <- calendar_end(out, "year")
+  out
 }
 
 # ------------------------------------------------------------------------------
@@ -1103,3 +1297,8 @@ field_index <- function(x) {
 is_calendar <- function(x) {
   inherits(x, "clock_calendar")
 }
+
+check_calendar <- function(x, ..., arg = caller_arg(x), call = caller_env()) {
+  check_inherits(x, what = "clock_calendar", arg = arg, call = call)
+}
+

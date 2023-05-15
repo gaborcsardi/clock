@@ -4,7 +4,8 @@
 #' and week day.
 #'
 #' @details
-#' Fields are recycled against each other.
+#' Fields are recycled against each other using
+#' [tidyverse recycling rules][vctrs::vector_recycling_rules].
 #'
 #' Fields are collected in order until the first `NULL` field is located. No
 #' fields after the first `NULL` field are used.
@@ -72,7 +73,8 @@ iso_year_week_day <- function(year,
     precision <- PRECISION_SECOND
     fields <- list(year = year, week = week, day = day, hour = hour, minute = minute, second = second)
   } else {
-    precision <- calendar_validate_subsecond_precision(subsecond_precision)
+    calendar_check_subsecond_precision(subsecond_precision)
+    precision <- precision_to_integer(subsecond_precision)
     fields <- list(year = year, week = week, day = day, hour = hour, minute = minute, second = second, subsecond = subsecond)
   }
 
@@ -83,13 +85,34 @@ iso_year_week_day <- function(year,
     last <- FALSE
   }
 
-  fields <- vec_recycle_common(!!!fields)
   fields <- vec_cast_common(!!!fields, .to = integer())
 
-  fields <- collect_iso_year_week_day_fields(fields, precision)
+  if (precision >= PRECISION_YEAR) {
+    check_between_year(fields$year, arg = "year")
+  }
+  if (precision >= PRECISION_WEEK) {
+    check_between_week(fields$week, arg = "week")
+  }
+  if (precision >= PRECISION_DAY) {
+    check_between_day_of_week(fields$day, arg = "day")
+  }
+  if (precision >= PRECISION_HOUR) {
+    check_between_hour(fields$hour, arg = "hour")
+  }
+  if (precision >= PRECISION_MINUTE) {
+    check_between_minute(fields$minute, arg = "minute")
+  }
+  if (precision >= PRECISION_SECOND) {
+    check_between_second(fields$second, arg = "second")
+  }
+  if (precision > PRECISION_SECOND) {
+    check_between_subsecond(fields$subsecond, precision, arg = "subsecond")
+  }
+
+  fields <- vec_recycle_common(!!!fields)
+  fields <- df_list_propagate_missing(fields)
 
   names <- NULL
-
   out <- new_iso_year_week_day_from_fields(fields, precision, names)
 
   if (last) {
@@ -184,14 +207,12 @@ vec_cast.clock_iso_year_week_day.clock_iso_year_week_day <- function(x, to, ...)
 # ------------------------------------------------------------------------------
 
 #' @export
-calendar_is_valid_precision.clock_iso_year_week_day <- function(x, precision) {
-  iso_year_week_day_is_valid_precision(precision)
+calendar_is_precision.clock_iso_year_week_day <- function(x, precision) {
+  iso_year_week_day_is_precision(precision)
 }
 
-iso_year_week_day_is_valid_precision <- function(precision) {
-  if (!is_valid_precision(precision)) {
-    FALSE
-  } else if (precision == PRECISION_YEAR || precision == PRECISION_WEEK) {
+iso_year_week_day_is_precision <- function(precision) {
+  if (precision == PRECISION_YEAR || precision == PRECISION_WEEK) {
     TRUE
   } else if (precision >= PRECISION_DAY && precision <= PRECISION_NANOSECOND) {
     TRUE
@@ -204,17 +225,41 @@ iso_year_week_day_is_valid_precision <- function(precision) {
 
 #' @export
 invalid_detect.clock_iso_year_week_day <- function(x) {
-  invalid_detect_iso_year_week_day_cpp(x, calendar_precision_attribute(x))
+  precision <- calendar_precision_attribute(x)
+
+  if (precision < PRECISION_WEEK) {
+    rep_along(x, FALSE)
+  } else {
+    year <- field_year(x)
+    week <- field_week(x)
+    invalid_detect_iso_year_week_day_cpp(year, week)
+  }
 }
 
 #' @export
 invalid_any.clock_iso_year_week_day <- function(x) {
-  invalid_any_iso_year_week_day_cpp(x, calendar_precision_attribute(x))
+  precision <- calendar_precision_attribute(x)
+
+  if (precision < PRECISION_WEEK) {
+    FALSE
+  } else {
+    year <- field_year(x)
+    week <- field_week(x)
+    invalid_any_iso_year_week_day_cpp(year, week)
+  }
 }
 
 #' @export
 invalid_count.clock_iso_year_week_day <- function(x) {
-  invalid_count_iso_year_week_day_cpp(x, calendar_precision_attribute(x))
+  precision <- calendar_precision_attribute(x)
+
+  if (precision < PRECISION_WEEK) {
+    0L
+  } else {
+    year <- field_year(x)
+    week <- field_week(x)
+    invalid_count_iso_year_week_day_cpp(year, week)
+  }
 }
 
 #' @export
@@ -222,8 +267,13 @@ invalid_resolve.clock_iso_year_week_day <- function(x, ..., invalid = NULL) {
   check_dots_empty()
   precision <- calendar_precision_attribute(x)
   invalid <- validate_invalid(invalid)
-  fields <- invalid_resolve_iso_year_week_day_cpp(x, precision, invalid)
-  new_iso_year_week_day_from_fields(fields, precision, names = names(x))
+
+  if (precision < PRECISION_WEEK) {
+    x
+  } else {
+    fields <- invalid_resolve_iso_year_week_day_cpp(x, precision, invalid, current_env())
+    new_iso_year_week_day_from_fields(fields, precision, names(x))
+  }
 }
 
 # ------------------------------------------------------------------------------
@@ -279,56 +329,56 @@ get_year.clock_iso_year_week_day <- function(x) {
 #' @rdname iso-year-week-day-getters
 #' @export
 get_week.clock_iso_year_week_day <- function(x) {
-  calendar_require_minimum_precision(x, PRECISION_WEEK, "get_week")
+  calendar_check_minimum_precision(x, PRECISION_WEEK)
   field_week(x)
 }
 
 #' @rdname iso-year-week-day-getters
 #' @export
 get_day.clock_iso_year_week_day <- function(x) {
-  calendar_require_minimum_precision(x, PRECISION_DAY, "get_day")
+  calendar_check_minimum_precision(x, PRECISION_DAY)
   field_day(x)
 }
 
 #' @rdname iso-year-week-day-getters
 #' @export
 get_hour.clock_iso_year_week_day <- function(x) {
-  calendar_require_minimum_precision(x, PRECISION_HOUR, "get_hour")
+  calendar_check_minimum_precision(x, PRECISION_HOUR)
   field_hour(x)
 }
 
 #' @rdname iso-year-week-day-getters
 #' @export
 get_minute.clock_iso_year_week_day <- function(x) {
-  calendar_require_minimum_precision(x, PRECISION_MINUTE, "get_minute")
+  calendar_check_minimum_precision(x, PRECISION_MINUTE)
   field_minute(x)
 }
 
 #' @rdname iso-year-week-day-getters
 #' @export
 get_second.clock_iso_year_week_day <- function(x) {
-  calendar_require_minimum_precision(x, PRECISION_SECOND, "get_second")
+  calendar_check_minimum_precision(x, PRECISION_SECOND)
   field_second(x)
 }
 
 #' @rdname iso-year-week-day-getters
 #' @export
 get_millisecond.clock_iso_year_week_day <- function(x) {
-  calendar_require_precision(x, PRECISION_MILLISECOND, "get_millisecond")
+  calendar_check_exact_precision(x, PRECISION_MILLISECOND)
   field_subsecond(x)
 }
 
 #' @rdname iso-year-week-day-getters
 #' @export
 get_microsecond.clock_iso_year_week_day <- function(x) {
-  calendar_require_precision(x, PRECISION_MICROSECOND, "get_microsecond")
+  calendar_check_exact_precision(x, PRECISION_MICROSECOND)
   field_subsecond(x)
 }
 
 #' @rdname iso-year-week-day-getters
 #' @export
 get_nanosecond.clock_iso_year_week_day <- function(x) {
-  calendar_require_precision(x, PRECISION_NANOSECOND, "get_nanosecond")
+  calendar_check_exact_precision(x, PRECISION_NANOSECOND)
   field_subsecond(x)
 }
 
@@ -398,7 +448,7 @@ set_year.clock_iso_year_week_day <- function(x, value, ...) {
 #' @export
 set_week.clock_iso_year_week_day <- function(x, value, ...) {
   check_dots_empty()
-  calendar_require_minimum_precision(x, PRECISION_YEAR, "set_week")
+  calendar_check_minimum_precision(x, PRECISION_YEAR)
   set_field_iso_year_week_day(x, value, "week")
 }
 
@@ -406,7 +456,7 @@ set_week.clock_iso_year_week_day <- function(x, value, ...) {
 #' @export
 set_day.clock_iso_year_week_day <- function(x, value, ...) {
   check_dots_empty()
-  calendar_require_minimum_precision(x, PRECISION_WEEK, "set_day")
+  calendar_check_minimum_precision(x, PRECISION_WEEK)
   set_field_iso_year_week_day(x, value, "day")
 }
 
@@ -414,7 +464,7 @@ set_day.clock_iso_year_week_day <- function(x, value, ...) {
 #' @export
 set_hour.clock_iso_year_week_day <- function(x, value, ...) {
   check_dots_empty()
-  calendar_require_minimum_precision(x, PRECISION_DAY, "set_hour")
+  calendar_check_minimum_precision(x, PRECISION_DAY)
   set_field_iso_year_week_day(x, value, "hour")
 }
 
@@ -422,7 +472,7 @@ set_hour.clock_iso_year_week_day <- function(x, value, ...) {
 #' @export
 set_minute.clock_iso_year_week_day <- function(x, value, ...) {
   check_dots_empty()
-  calendar_require_minimum_precision(x, PRECISION_HOUR, "set_minute")
+  calendar_check_minimum_precision(x, PRECISION_HOUR)
   set_field_iso_year_week_day(x, value, "minute")
 }
 
@@ -430,7 +480,7 @@ set_minute.clock_iso_year_week_day <- function(x, value, ...) {
 #' @export
 set_second.clock_iso_year_week_day <- function(x, value, ...) {
   check_dots_empty()
-  calendar_require_minimum_precision(x, PRECISION_MINUTE, "set_second")
+  calendar_check_minimum_precision(x, PRECISION_MINUTE)
   set_field_iso_year_week_day(x, value, "second")
 }
 
@@ -438,7 +488,7 @@ set_second.clock_iso_year_week_day <- function(x, value, ...) {
 #' @export
 set_millisecond.clock_iso_year_week_day <- function(x, value, ...) {
   check_dots_empty()
-  calendar_require_any_of_precisions(x, c(PRECISION_SECOND, PRECISION_MILLISECOND), "set_millisecond")
+  calendar_check_exact_precision(x, c(PRECISION_SECOND, PRECISION_MILLISECOND))
   set_field_iso_year_week_day(x, value, "millisecond")
 }
 
@@ -446,7 +496,7 @@ set_millisecond.clock_iso_year_week_day <- function(x, value, ...) {
 #' @export
 set_microsecond.clock_iso_year_week_day <- function(x, value, ...) {
   check_dots_empty()
-  calendar_require_any_of_precisions(x, c(PRECISION_SECOND, PRECISION_MICROSECOND), "set_microsecond")
+  calendar_check_exact_precision(x, c(PRECISION_SECOND, PRECISION_MICROSECOND))
   set_field_iso_year_week_day(x, value, "microsecond")
 }
 
@@ -454,7 +504,7 @@ set_microsecond.clock_iso_year_week_day <- function(x, value, ...) {
 #' @export
 set_nanosecond.clock_iso_year_week_day <- function(x, value, ...) {
   check_dots_empty()
-  calendar_require_any_of_precisions(x, c(PRECISION_SECOND, PRECISION_NANOSECOND), "set_nanosecond")
+  calendar_check_exact_precision(x, c(PRECISION_SECOND, PRECISION_NANOSECOND))
   set_field_iso_year_week_day(x, value, "nanosecond")
 }
 
@@ -467,28 +517,51 @@ set_field_iso_year_week_day <- function(x, value, component) {
   precision_value <- iso_year_week_day_component_to_precision(component)
   precision_out <- precision_common2(precision_fields, precision_value)
 
-  value <- vec_cast(value, integer(), x_arg = "value")
+  names_out <- names(x)
+
+  value <- vec_cast(value, integer())
+  value <- unname(value)
+
+  switch(
+    component,
+    year = check_between_year(value),
+    week = check_between_week(value),
+    day = check_between_day_of_week(value),
+    hour = check_between_hour(value),
+    minute = check_between_minute(value),
+    second = check_between_second(value),
+    millisecond = check_between_subsecond(value, PRECISION_MILLISECOND),
+    microsecond = check_between_subsecond(value, PRECISION_MICROSECOND),
+    nanosecond = check_between_subsecond(value, PRECISION_NANOSECOND),
+    abort("Unknown `component`", .internal = TRUE)
+  )
+
   args <- vec_recycle_common(x = x, value = value)
+  args <- df_list_propagate_missing(args)
   x <- args$x
   value <- args$value
 
-  result <- set_field_iso_year_week_day_cpp(x, value, precision_fields, precision_value)
-  fields <- result$fields
   field <- iso_year_week_day_component_to_field(component)
-  fields[[field]] <- result$value
 
-  new_iso_year_week_day_from_fields(fields, precision_out, names = names(x))
+  out <- vec_unstructure(x)
+  out[[field]] <- value
+
+  new_iso_year_week_day_from_fields(out, precision_out, names = names_out)
 }
 
 set_field_iso_year_week_day_last <- function(x) {
   precision_fields <- calendar_precision_attribute(x)
   precision_out <- precision_common2(precision_fields, PRECISION_WEEK)
 
-  result <- set_field_iso_year_week_day_last_cpp(x, precision_fields)
-  fields <- result$fields
-  fields[["week"]] <- result$value
+  names_out <- names(x)
 
-  new_iso_year_week_day_from_fields(fields, precision_out, names = names(x))
+  year <- field_year(x)
+  value <- get_iso_year_week_day_last_cpp(year)
+
+  out <- vec_unstructure(x)
+  out[["week"]] <- value
+
+  new_iso_year_week_day_from_fields(out, precision_out, names = names_out)
 }
 
 # ------------------------------------------------------------------------------
@@ -614,9 +687,10 @@ iso_year_week_day_minus_iso_year_week_day <- function(op, x, y, ...) {
 #' undefined, as the 53rd ISO week of 2019 doesn't exist to begin with.
 #'
 #' @details
-#' `x` and `n` are recycled against each other.
+#' `x` and `n` are recycled against each other using
+#' [tidyverse recycling rules][vctrs::vector_recycling_rules].
 #'
-#' @inheritParams add_years
+#' @inheritParams clock-arithmetic
 #'
 #' @param x `[clock_iso_year_week_day]`
 #'
@@ -637,19 +711,38 @@ add_years.clock_iso_year_week_day <- function(x, n, ...) {
   iso_year_week_day_plus_duration(x, n, PRECISION_YEAR)
 }
 
-iso_year_week_day_plus_duration <- function(x, n, precision_n) {
-  precision_fields <- calendar_precision_attribute(x)
+iso_year_week_day_plus_duration <- function(x,
+                                            n,
+                                            n_precision,
+                                            ...,
+                                            error_call = caller_env()) {
+  check_dots_empty0(...)
 
-  n <- duration_collect_n(n, precision_n)
-  args <- vec_recycle_common(x = x, n = n)
+  x_precision <- calendar_precision_attribute(x)
+
+  n <- duration_collect_n(n, n_precision, error_call = error_call)
+
+  size <- vec_size_common(x = x, n = n, .call = error_call)
+  args <- vec_recycle_common(x = x, n = n, .size = size)
   x <- args$x
   n <- args$n
 
   names <- names_common(x, n)
 
-  fields <- iso_year_week_day_plus_duration_cpp(x, n, precision_fields, precision_n)
+  x <- vec_unstructure(x)
 
-  new_iso_year_week_day_from_fields(fields, precision_fields, names = names)
+  if (n_precision == PRECISION_YEAR) {
+    fields <- iso_year_week_day_plus_years_cpp(x$year, n)
+    x$year <- fields$year
+  } else {
+    abort("Unknown precision.", .internal = TRUE)
+  }
+
+  if (x_precision != n_precision) {
+    x <- df_list_propagate_missing(x, size = size)
+  }
+
+  new_iso_year_week_day_from_fields(x, x_precision, names = names)
 }
 
 # ------------------------------------------------------------------------------
@@ -659,6 +752,8 @@ iso_year_week_day_plus_duration <- function(x, n, precision_n) {
 #' `as_iso_year_week_day()` converts a vector to the iso-year-week-day
 #' calendar. Time points, Dates, POSIXct, and other calendars can all be
 #' converted to iso-year-week-day.
+#'
+#' @inheritParams rlang::args_dots_empty
 #'
 #' @param x `[vector]`
 #'
@@ -675,38 +770,49 @@ iso_year_week_day_plus_duration <- function(x, n, precision_n) {
 #'
 #' # From other calendars
 #' as_iso_year_week_day(year_quarter_day(2019, quarter = 2, day = 50))
-as_iso_year_week_day <- function(x)  {
+as_iso_year_week_day <- function(x, ...)  {
   UseMethod("as_iso_year_week_day")
 }
 
 #' @export
-as_iso_year_week_day.default <- function(x) {
+as_iso_year_week_day.default <- function(x, ...) {
   stop_clock_unsupported_conversion(x, "clock_iso_year_week_day")
 }
 
 #' @export
-as_iso_year_week_day.clock_iso_year_week_day <- function(x) {
+as_iso_year_week_day.clock_iso_year_week_day <- function(x, ...) {
+  check_dots_empty0(...)
   x
 }
 
 # ------------------------------------------------------------------------------
 
 #' @export
-as_sys_time.clock_iso_year_week_day <- function(x) {
-  calendar_require_all_valid(x)
+as_sys_time.clock_iso_year_week_day <- function(x, ...) {
+  check_dots_empty0(...)
+  calendar_check_no_invalid(x)
   precision <- calendar_precision_attribute(x)
   fields <- as_sys_time_iso_year_week_day_cpp(x, precision)
   new_sys_time_from_fields(fields, precision, clock_rcrd_names(x))
 }
 
 #' @export
-as_naive_time.clock_iso_year_week_day <- function(x) {
+as_naive_time.clock_iso_year_week_day <- function(x, ...) {
+  check_dots_empty0(...)
   as_naive_time(as_sys_time(x))
 }
 
 #' @export
 as.character.clock_iso_year_week_day <- function(x, ...) {
   format(x)
+}
+
+# ------------------------------------------------------------------------------
+
+#' @export
+calendar_leap_year.clock_iso_year_week_day <- function(x) {
+  year <- get_year(x)
+  iso_year_week_day_leap_year_cpp(year)
 }
 
 # ------------------------------------------------------------------------------
@@ -758,7 +864,8 @@ calendar_group.clock_iso_year_week_day <- function(x, precision, ..., n = 1L) {
   n <- validate_calendar_group_n(n)
   x <- calendar_narrow(x, precision)
 
-  precision <- validate_precision_string(precision)
+  check_precision(precision)
+  precision <- precision_to_integer(precision)
 
   if (precision == PRECISION_YEAR) {
     value <- get_year(x)
@@ -805,7 +912,8 @@ calendar_group.clock_iso_year_week_day <- function(x, precision, ..., n = 1L) {
 #' # Narrowed to week precision
 #' calendar_narrow(x, "week")
 calendar_narrow.clock_iso_year_week_day <- function(x, precision) {
-  precision <- validate_precision_string(precision)
+  check_precision(precision)
+  precision <- precision_to_integer(precision)
 
   out_fields <- list()
   x_fields <- unclass(x)
@@ -853,7 +961,9 @@ calendar_narrow.clock_iso_year_week_day <- function(x, precision) {
 #' sec
 calendar_widen.clock_iso_year_week_day <- function(x, precision) {
   x_precision <- calendar_precision_attribute(x)
-  precision <- validate_precision_string(precision)
+
+  check_precision(precision)
+  precision <- precision_to_integer(precision)
 
   if (precision >= PRECISION_WEEK && x_precision < PRECISION_WEEK) {
     x <- set_week(x, 1L)
@@ -898,7 +1008,9 @@ NULL
 #' @export
 calendar_start.clock_iso_year_week_day <- function(x, precision) {
   x_precision <- calendar_precision_attribute(x)
-  precision <- validate_precision_string(precision)
+
+  check_precision(precision)
+  precision <- precision_to_integer(precision)
 
   calendar_start_end_checks(x, x_precision, precision, "start")
 
@@ -918,7 +1030,9 @@ calendar_start.clock_iso_year_week_day <- function(x, precision) {
 #' @export
 calendar_end.clock_iso_year_week_day <- function(x, precision) {
   x_precision <- calendar_precision_attribute(x)
-  precision <- validate_precision_string(precision)
+
+  check_precision(precision)
+  precision <- precision_to_integer(precision)
 
   calendar_start_end_checks(x, x_precision, precision, "end")
 
@@ -976,7 +1090,8 @@ calendar_count_between.clock_iso_year_week_day <- function(start,
 calendar_count_between_standardize_precision_n.clock_iso_year_week_day <- function(x,
                                                                                    precision,
                                                                                    n) {
-  precision_int <- validate_precision_string(precision)
+  check_precision(precision)
+  precision_int <- precision_to_integer(precision)
 
   allowed_precisions <- c(PRECISION_YEAR)
 
@@ -990,7 +1105,8 @@ calendar_count_between_standardize_precision_n.clock_iso_year_week_day <- functi
 calendar_count_between_compute.clock_iso_year_week_day <- function(start,
                                                                    end,
                                                                    precision) {
-  precision <- validate_precision_string(precision)
+  check_precision(precision)
+  precision <- precision_to_integer(precision)
 
   if (precision == PRECISION_YEAR) {
     out <- get_year(end) - get_year(start)
@@ -1003,7 +1119,8 @@ calendar_count_between_compute.clock_iso_year_week_day <- function(start,
 calendar_count_between_proxy_compare.clock_iso_year_week_day <- function(start,
                                                                          end,
                                                                          precision) {
-  precision <- validate_precision_string(precision)
+  check_precision(precision)
+  precision <- precision_to_integer(precision)
 
   start <- vec_proxy_compare(start)
   end <- vec_proxy_compare(end)
@@ -1087,6 +1204,53 @@ seq.clock_iso_year_week_day <- function(from,
 
 # ------------------------------------------------------------------------------
 
+#' @export
+clock_minimum.clock_iso_year_week_day <- function(x) {
+  switch(
+    calendar_precision_attribute(x) + 1L,
+    clock_minimum_iso_year_week_day_year,
+    abort("Invalid precision", .internal = TRUE),
+    abort("Invalid precision", .internal = TRUE),
+    clock_minimum_iso_year_week_day_week,
+    clock_minimum_iso_year_week_day_day,
+    clock_minimum_iso_year_week_day_hour,
+    clock_minimum_iso_year_week_day_minute,
+    clock_minimum_iso_year_week_day_second,
+    clock_minimum_iso_year_week_day_millisecond,
+    clock_minimum_iso_year_week_day_microsecond,
+    clock_minimum_iso_year_week_day_nanosecond,
+    abort("Invalid precision", .internal = TRUE)
+  )
+}
+
+#' @export
+clock_maximum.clock_iso_year_week_day <- function(x) {
+  switch(
+    calendar_precision_attribute(x) + 1L,
+    clock_maximum_iso_year_week_day_year,
+    abort("Invalid precision", .internal = TRUE),
+    abort("Invalid precision", .internal = TRUE),
+    clock_maximum_iso_year_week_day_week,
+    clock_maximum_iso_year_week_day_day,
+    clock_maximum_iso_year_week_day_hour,
+    clock_maximum_iso_year_week_day_minute,
+    clock_maximum_iso_year_week_day_second,
+    clock_maximum_iso_year_week_day_millisecond,
+    clock_maximum_iso_year_week_day_microsecond,
+    clock_maximum_iso_year_week_day_nanosecond,
+    abort("Invalid precision", .internal = TRUE)
+  )
+}
+
+iso_year_week_day_minimum <- function(precision) {
+  calendar_minimum(precision, iso_year_week_day(clock_calendar_year_minimum))
+}
+iso_year_week_day_maximum <- function(precision) {
+  calendar_maximum(precision, iso_year_week_day(clock_calendar_year_maximum))
+}
+
+# ------------------------------------------------------------------------------
+
 clock_init_iso_year_week_day_utils <- function(env) {
   year <- iso_year_week_day(integer())
 
@@ -1099,6 +1263,26 @@ clock_init_iso_year_week_day_utils <- function(env) {
   assign("clock_empty_iso_year_week_day_millisecond", calendar_widen(year, "millisecond"), envir = env)
   assign("clock_empty_iso_year_week_day_microsecond", calendar_widen(year, "microsecond"), envir = env)
   assign("clock_empty_iso_year_week_day_nanosecond", calendar_widen(year, "nanosecond"), envir = env)
+
+  assign("clock_minimum_iso_year_week_day_year", iso_year_week_day_minimum("year"), envir = env)
+  assign("clock_minimum_iso_year_week_day_week", iso_year_week_day_minimum("week"), envir = env)
+  assign("clock_minimum_iso_year_week_day_day", iso_year_week_day_minimum("day"), envir = env)
+  assign("clock_minimum_iso_year_week_day_hour", iso_year_week_day_minimum("hour"), envir = env)
+  assign("clock_minimum_iso_year_week_day_minute", iso_year_week_day_minimum("minute"), envir = env)
+  assign("clock_minimum_iso_year_week_day_second", iso_year_week_day_minimum("second"), envir = env)
+  assign("clock_minimum_iso_year_week_day_millisecond", iso_year_week_day_minimum("millisecond"), envir = env)
+  assign("clock_minimum_iso_year_week_day_microsecond", iso_year_week_day_minimum("microsecond"), envir = env)
+  assign("clock_minimum_iso_year_week_day_nanosecond", iso_year_week_day_minimum("nanosecond"), envir = env)
+
+  assign("clock_maximum_iso_year_week_day_year", iso_year_week_day_maximum("year"), envir = env)
+  assign("clock_maximum_iso_year_week_day_week", iso_year_week_day_maximum("week"), envir = env)
+  assign("clock_maximum_iso_year_week_day_day", iso_year_week_day_maximum("day"), envir = env)
+  assign("clock_maximum_iso_year_week_day_hour", iso_year_week_day_maximum("hour"), envir = env)
+  assign("clock_maximum_iso_year_week_day_minute", iso_year_week_day_maximum("minute"), envir = env)
+  assign("clock_maximum_iso_year_week_day_second", iso_year_week_day_maximum("second"), envir = env)
+  assign("clock_maximum_iso_year_week_day_millisecond", iso_year_week_day_maximum("millisecond"), envir = env)
+  assign("clock_maximum_iso_year_week_day_microsecond", iso_year_week_day_maximum("microsecond"), envir = env)
+  assign("clock_maximum_iso_year_week_day_nanosecond", iso_year_week_day_maximum("nanosecond"), envir = env)
 
   invisible(NULL)
 }

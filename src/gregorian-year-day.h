@@ -7,7 +7,6 @@
 #include "utils.h"
 #include "stream.h"
 #include "resolve.h"
-#include "check.h"
 
 namespace rclock {
 
@@ -24,43 +23,6 @@ inline
 ordinal::year_yearday
 resolve_previous_day_yyd(const ordinal::year_yearday& x) {
   return {x.year(), ordinal::yearday{365}};
-}
-
-template <enum component Component>
-inline void check_range(const int& value, const char* arg) {
-  clock_abort("Unimplemented range check");
-}
-template <>
-inline void check_range<component::year>(const int& value, const char* arg) {
-  check_range_year(value, arg);
-}
-template <>
-inline void check_range<component::day>(const int& value, const char* arg) {
-  check_range_ordinal_day(value, arg);
-}
-template <>
-inline void check_range<component::hour>(const int& value, const char* arg) {
-  check_range_hour(value, arg);
-}
-template <>
-inline void check_range<component::minute>(const int& value, const char* arg) {
-  check_range_minute(value, arg);
-}
-template <>
-inline void check_range<component::second>(const int& value, const char* arg) {
-  check_range_second(value, arg);
-}
-template <>
-inline void check_range<component::millisecond>(const int& value, const char* arg) {
-  check_range_millisecond(value, arg);
-}
-template <>
-inline void check_range<component::microsecond>(const int& value, const char* arg) {
-  check_range_microsecond(value, arg);
-}
-template <>
-inline void check_range<component::nanosecond>(const int& value, const char* arg) {
-  check_range_nanosecond(value, arg);
 }
 
 inline
@@ -95,17 +57,10 @@ public:
 
   std::ostringstream& stream(std::ostringstream&, r_ssize i) const NOEXCEPT;
 
-  bool ok(r_ssize i) const NOEXCEPT;
-
   void add(const date::years& x, r_ssize i) NOEXCEPT;
 
   void assign_year(const ordinal::year& x, r_ssize i) NOEXCEPT;
   void assign_na(r_ssize i) NOEXCEPT;
-
-  void resolve(r_ssize i, const enum invalid type);
-
-  template <component Component>
-  void check_range(const int& value, const char* arg) const;
 
   ordinal::year to_year(r_ssize i) const NOEXCEPT;
   cpp11::writable::list to_list() const;
@@ -123,14 +78,12 @@ public:
 
   std::ostringstream& stream(std::ostringstream&, r_ssize i) const NOEXCEPT;
 
-  bool ok(r_ssize i) const NOEXCEPT;
-
   void assign_day(const ordinal::yearday& x, r_ssize i) NOEXCEPT;
   void assign_year_yearday(const ordinal::year_yearday& x, r_ssize i) NOEXCEPT;
   void assign_sys_time(const date::sys_time<date::days>& x, r_ssize i) NOEXCEPT;
   void assign_na(r_ssize i) NOEXCEPT;
 
-  void resolve(r_ssize i, const enum invalid type);
+  void resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call);
 
   date::sys_time<date::days> to_sys_time(r_ssize i) const NOEXCEPT;
   ordinal::year_yearday to_year_yearday(r_ssize i) const NOEXCEPT;
@@ -154,7 +107,7 @@ public:
   void assign_sys_time(const date::sys_time<std::chrono::hours>& x, r_ssize i) NOEXCEPT;
   void assign_na(r_ssize i) NOEXCEPT;
 
-  void resolve(r_ssize i, const enum invalid type);
+  void resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call);
 
   date::sys_time<std::chrono::hours> to_sys_time(r_ssize i) const NOEXCEPT;
   cpp11::writable::list to_list() const;
@@ -178,7 +131,7 @@ public:
   void assign_sys_time(const date::sys_time<std::chrono::minutes>& x, r_ssize i) NOEXCEPT;
   void assign_na(r_ssize i) NOEXCEPT;
 
-  void resolve(r_ssize i, const enum invalid type);
+  void resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call);
 
   date::sys_time<std::chrono::minutes> to_sys_time(r_ssize i) const NOEXCEPT;
   cpp11::writable::list to_list() const;
@@ -203,7 +156,7 @@ public:
   void assign_sys_time(const date::sys_time<std::chrono::seconds>& x, r_ssize i) NOEXCEPT;
   void assign_na(r_ssize i) NOEXCEPT;
 
-  void resolve(r_ssize i, const enum invalid type);
+  void resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call);
 
   date::sys_time<std::chrono::seconds> to_sys_time(r_ssize i) const NOEXCEPT;
   cpp11::writable::list to_list() const;
@@ -230,7 +183,7 @@ public:
   void assign_sys_time(const date::sys_time<Duration>& x, r_ssize i) NOEXCEPT;
   void assign_na(r_ssize i) NOEXCEPT;
 
-  void resolve(r_ssize i, const enum invalid type);
+  void resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call);
 
   date::sys_time<Duration> to_sys_time(r_ssize i) const NOEXCEPT;
   cpp11::writable::list to_list() const;
@@ -275,13 +228,6 @@ y::stream(std::ostringstream& os, r_ssize i) const NOEXCEPT
 }
 
 inline
-bool
-y::ok(r_ssize i) const NOEXCEPT
-{
-  return true;
-}
-
-inline
 void
 y::add(const date::years& x, r_ssize i) NOEXCEPT
 {
@@ -300,21 +246,6 @@ void
 y::assign_na(r_ssize i) NOEXCEPT
 {
   year_.assign_na(i);
-}
-
-inline
-void
-y::resolve(r_ssize i, const enum invalid type)
-{
-  // Never invalid
-}
-
-template <component Component>
-inline
-void
-y::check_range(const int& value, const char* arg) const
-{
-  detail::check_range<Component>(value, arg);
 }
 
 inline
@@ -358,13 +289,6 @@ yyd::stream(std::ostringstream& os, r_ssize i) const NOEXCEPT
 }
 
 inline
-bool
-yyd::ok(r_ssize i) const NOEXCEPT
-{
-  return to_year_yearday(i).ok();
-}
-
-inline
 void
 yyd::assign_day(const ordinal::yearday& x, r_ssize i) NOEXCEPT
 {
@@ -397,7 +321,7 @@ yyd::assign_na(r_ssize i) NOEXCEPT
 
 inline
 void
-yyd::resolve(r_ssize i, const enum invalid type)
+yyd::resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call)
 {
   const ordinal::year_yearday elt = to_year_yearday(i);
 
@@ -426,7 +350,7 @@ yyd::resolve(r_ssize i, const enum invalid type)
     break;
   }
   case invalid::error: {
-    rclock::detail::resolve_error(i);
+    rclock::detail::resolve_error(i, call);
   }
   }
 }
@@ -507,7 +431,7 @@ yydh::assign_na(r_ssize i) NOEXCEPT
 
 inline
 void
-yydh::resolve(r_ssize i, const enum invalid type)
+yydh::resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call)
 {
   const ordinal::year_yearday elt = to_year_yearday(i);
 
@@ -545,7 +469,7 @@ yydh::resolve(r_ssize i, const enum invalid type)
     break;
   }
   case invalid::error: {
-    rclock::detail::resolve_error(i);
+    rclock::detail::resolve_error(i, call);
   }
   }
 }
@@ -620,7 +544,7 @@ yydhm::assign_na(r_ssize i) NOEXCEPT
 
 inline
 void
-yydhm::resolve(r_ssize i, const enum invalid type)
+yydhm::resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call)
 {
   const ordinal::year_yearday elt = to_year_yearday(i);
 
@@ -661,7 +585,7 @@ yydhm::resolve(r_ssize i, const enum invalid type)
     break;
   }
   case invalid::error: {
-    rclock::detail::resolve_error(i);
+    rclock::detail::resolve_error(i, call);
   }
   }
 }
@@ -737,7 +661,7 @@ yydhms::assign_na(r_ssize i) NOEXCEPT
 
 inline
 void
-yydhms::resolve(r_ssize i, const enum invalid type)
+yydhms::resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call)
 {
   const ordinal::year_yearday elt = to_year_yearday(i);
 
@@ -781,7 +705,7 @@ yydhms::resolve(r_ssize i, const enum invalid type)
     break;
   }
   case invalid::error: {
-    rclock::detail::resolve_error(i);
+    rclock::detail::resolve_error(i, call);
   }
   }
 }
@@ -865,7 +789,7 @@ yydhmss<Duration>::assign_na(r_ssize i) NOEXCEPT
 template <typename Duration>
 inline
 void
-yydhmss<Duration>::resolve(r_ssize i, const enum invalid type)
+yydhmss<Duration>::resolve(r_ssize i, const enum invalid type, const cpp11::sexp& call)
 {
   const ordinal::year_yearday elt = to_year_yearday(i);
 
@@ -912,7 +836,7 @@ yydhmss<Duration>::resolve(r_ssize i, const enum invalid type)
     break;
   }
   case invalid::error: {
-    rclock::detail::resolve_error(i);
+    rclock::detail::resolve_error(i, call);
   }
   }
 }

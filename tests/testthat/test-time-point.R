@@ -65,13 +65,13 @@ test_that("can round with `origin` altering starting point", {
 })
 
 test_that("cannot floor to more precise precision", {
-  expect_snapshot_error(time_point_floor(naive_days(), "second"))
+  expect_snapshot(error = TRUE, time_point_floor(naive_days(), "second"))
 })
 
 test_that("rounding with `origin` requires same clock", {
   origin <- sys_days(0)
   x <- naive_days(0)
-  expect_snapshot_error(time_point_floor(x, "day", origin = origin))
+  expect_snapshot(error = TRUE, time_point_floor(x, "day", origin = origin))
 })
 
 test_that("`origin` can be cast to a more precise `precision`, but not to a less precise one", {
@@ -84,27 +84,27 @@ test_that("`origin` can be cast to a more precise `precision`, but not to a less
     time_point_floor(x - as_duration(origin1), "hour", n = 5) + as_duration(origin1)
   )
 
-  expect_snapshot_error(time_point_floor(x, "hour", origin = origin2))
+  expect_snapshot(error = TRUE, time_point_floor(x, "hour", origin = origin2))
 })
 
 test_that("`origin` must be size 1", {
   origin <- naive_days(0:1)
   x <- naive_days(0)
-  expect_snapshot_error(time_point_floor(x, "day", origin = origin))
+  expect_snapshot(error = TRUE, time_point_floor(x, "day", origin = origin))
 })
 
 test_that("`origin` must not be `NA`", {
   origin <- naive_days(NA)
   x <- naive_days(0)
-  expect_snapshot_error(time_point_floor(x, "day", origin = origin))
+  expect_snapshot(error = TRUE, time_point_floor(x, "day", origin = origin))
 })
 
 test_that("`origin` can't be Date or POSIXt", {
   origin1 <- new_date(0)
   origin2 <- new_datetime(0, "America/New_York")
   x <- naive_days(0)
-  expect_snapshot_error(time_point_floor(x, "day", origin = origin1))
-  expect_snapshot_error(time_point_floor(x, "day", origin = origin2))
+  expect_snapshot(error = TRUE, time_point_floor(x, "day", origin = origin1))
+  expect_snapshot(error = TRUE, time_point_floor(x, "day", origin = origin2))
 })
 
 # ------------------------------------------------------------------------------
@@ -168,27 +168,27 @@ test_that("`target` is recycled to size of `x`", {
     sys_days(3:4)
   )
 
-  expect_snapshot_error(time_point_shift(sys_days(0), weekday(1:2)))
+  expect_snapshot(error = TRUE, time_point_shift(sys_days(0), weekday(1:2)))
 })
 
 test_that("`x` is validated", {
-  expect_snapshot_error(time_point_shift(1))
+  expect_snapshot(error = TRUE, time_point_shift(1))
 })
 
 test_that("`target` is validated", {
-  expect_snapshot_error(time_point_shift(sys_days(0), 1))
+  expect_snapshot(error = TRUE, time_point_shift(sys_days(0), 1))
 })
 
 test_that("`which` is validated", {
-  expect_snapshot_error(time_point_shift(sys_days(), weekday(), which = 1))
-  expect_snapshot_error(time_point_shift(sys_days(), weekday(), which = "foo"))
-  expect_snapshot_error(time_point_shift(sys_days(), weekday(), which = c("next", "previous")))
+  expect_snapshot(error = TRUE, time_point_shift(sys_days(), weekday(), which = 1))
+  expect_snapshot(error = TRUE, time_point_shift(sys_days(), weekday(), which = "foo"))
+  expect_snapshot(error = TRUE, time_point_shift(sys_days(), weekday(), which = c("next", "previous")))
 })
 
 test_that("`boundary` is validated", {
-  expect_snapshot_error(time_point_shift(sys_days(), weekday(), boundary = 1))
-  expect_snapshot_error(time_point_shift(sys_days(), weekday(), boundary = "foo"))
-  expect_snapshot_error(time_point_shift(sys_days(), weekday(), boundary = c("keep", "advance")))
+  expect_snapshot(error = TRUE, time_point_shift(sys_days(), weekday(), boundary = 1))
+  expect_snapshot(error = TRUE, time_point_shift(sys_days(), weekday(), boundary = "foo"))
+  expect_snapshot(error = TRUE, time_point_shift(sys_days(), weekday(), boundary = c("keep", "advance")))
 })
 
 # ------------------------------------------------------------------------------
@@ -313,6 +313,20 @@ test_that("seq(by, length.out) works", {
   expect_identical(seq(naive_seconds(0L), by = 2, along.with = 1:3), naive_seconds(c(0L, 2L, 4L)))
 })
 
+test_that("seq() with `from > to && by > 0` or `from < to && by < 0` results in length 0 output (#282)", {
+  expect_identical(seq(naive_days(2L), to = naive_days(1L), by = 1), naive_days())
+  expect_identical(seq(naive_days(5L), to = naive_days(1L), by = 1), naive_days())
+
+  expect_identical(seq(naive_days(1L), to = naive_days(2L), by = -1), naive_days())
+  expect_identical(seq(naive_days(1L), to = naive_days(5L), by = -1), naive_days())
+
+  # In particular, handles the case where subtraction of distant `from` and `to` would overflow
+  x <- as_naive_time(duration_cast(duration_years(200), "nanosecond"))
+  y <- as_naive_time(duration_cast(duration_years(-200), "nanosecond"))
+  expect_identical(seq(x, y, by = 1), as_naive_time(duration_nanoseconds()))
+  expect_identical(seq(y, x, by = -1), as_naive_time(duration_nanoseconds()))
+})
+
 test_that("`by` can be a duration", {
   expect_identical(
     seq(naive_seconds(0), to = naive_seconds(1000), by = duration_minutes(1)),
@@ -325,11 +339,11 @@ test_that("`by` can be a duration", {
 })
 
 test_that("can't mix chronological time points and calendrical durations", {
-  expect_snapshot_error(seq(naive_seconds(0), by = duration_years(1), length.out = 2))
+  expect_snapshot(error = TRUE, seq(naive_seconds(0), by = duration_years(1), length.out = 2))
 })
 
 test_that("can't mix clocks in seq()", {
-  expect_snapshot_error(seq(sys_seconds(0), to = naive_seconds(5), by = 1))
+  expect_snapshot(error = TRUE, seq(sys_seconds(0), to = naive_seconds(5), by = 1))
 })
 
 test_that("`to` is always cast to `from`", {
@@ -338,7 +352,7 @@ test_that("`to` is always cast to `from`", {
     seq(naive_seconds(0), to = naive_seconds(12 * 86400), by = 86400 * 2)
   )
 
-  expect_snapshot_error(seq(naive_days(0), to = naive_seconds(5), by = 2))
+  expect_snapshot(error = TRUE, seq(naive_days(0), to = naive_seconds(5), by = 2))
 })
 
 test_that("can make nanosecond precision seqs", {
@@ -350,10 +364,37 @@ test_that("can make nanosecond precision seqs", {
 })
 
 # ------------------------------------------------------------------------------
+# time_point_spanning_seq()
+
+test_that("generates the regular sequence along the full span", {
+  x <- naive_days(c(-5, 5, 6, 0))
+  expect_identical(time_point_spanning_seq(x), naive_days(-5:6))
+})
+
+test_that("missing values are removed", {
+  x <- naive_days(c(1, NA, 0, 2))
+  expect_identical(time_point_spanning_seq(x), naive_days(0:2))
+
+  x <- naive_days(c(NA, NA))
+  expect_identical(time_point_spanning_seq(x), naive_days())
+})
+
+test_that("works with empty vectors", {
+  x <- naive_days()
+  expect_identical(time_point_spanning_seq(x), x)
+})
+
+test_that("validates the input", {
+  expect_snapshot(error = TRUE, {
+    time_point_spanning_seq(1)
+  })
+})
+
+# ------------------------------------------------------------------------------
 # vec_arith()
 
 test_that("duration to add to a time-point must have at least week precision (#120)", {
-  expect_snapshot_error(naive_seconds(0) + duration_years(1))
+  expect_snapshot(error = TRUE, naive_seconds(0) + duration_years(1))
 })
 
 # ------------------------------------------------------------------------------
@@ -365,5 +406,138 @@ test_that("precision: can get the precision", {
 })
 
 test_that("precision: can only be called on time points", {
-  expect_snapshot_error(time_point_precision(duration_days()))
+  expect_snapshot(error = TRUE, time_point_precision(duration_days()))
+})
+
+# ------------------------------------------------------------------------------
+# add_*()
+
+test_that("unsupported time point addition throws good error", {
+  x <- naive_seconds()
+
+  expect_snapshot(error = TRUE, {
+    add_years(x, 1)
+  })
+  expect_snapshot(error = TRUE, {
+    add_quarters(x, 1)
+  })
+  expect_snapshot(error = TRUE, {
+    add_months(x, 1)
+  })
+})
+
+# ------------------------------------------------------------------------------
+# clock_minimum() / clock_maximum()
+
+test_that("minimums are right", {
+  skip_if_not_on_os("mac")
+
+  # Known that the only time point that prints the limits right is nanosecond
+  # due to how the print method goes through year-month-day and the year there
+  # isn't high enough
+  expect_snapshot({
+    # clock_minimum(as_sys_time(duration_days()))
+    # clock_minimum(as_sys_time(duration_hours()))
+    # clock_minimum(as_sys_time(duration_minutes()))
+    # clock_minimum(as_sys_time(duration_seconds()))
+    # clock_minimum(as_sys_time(duration_milliseconds()))
+    # clock_minimum(as_sys_time(duration_microseconds()))
+    clock_minimum(as_sys_time(duration_nanoseconds()))
+
+    # clock_minimum(as_naive_time(duration_days()))
+    # clock_minimum(as_naive_time(duration_hours()))
+    # clock_minimum(as_naive_time(duration_minutes()))
+    # clock_minimum(as_naive_time(duration_seconds()))
+    # clock_minimum(as_naive_time(duration_milliseconds()))
+    # clock_minimum(as_naive_time(duration_microseconds()))
+    clock_minimum(as_naive_time(duration_nanoseconds()))
+  })
+
+  for (precision in precision_names()) {
+    precision <- precision_to_integer(precision)
+
+    if (precision < PRECISION_DAY) {
+      next
+    }
+
+    x <- duration_helper(0L, precision)
+
+    expect_identical(as_duration(clock_minimum(as_sys_time(x))), clock_minimum(x))
+    expect_identical(as_duration(clock_minimum(as_naive_time(x))), clock_minimum(x))
+  }
+})
+
+test_that("maximums are right", {
+  skip_if_not_on_os("mac")
+
+  # Known that the only time point that prints the limits right is nanosecond
+  # due to how the print method goes through year-month-day and the year there
+  # isn't high enough
+  expect_snapshot({
+    # clock_maximum(as_sys_time(duration_days()))
+    # clock_maximum(as_sys_time(duration_hours()))
+    # clock_maximum(as_sys_time(duration_minutes()))
+    # clock_maximum(as_sys_time(duration_seconds()))
+    # clock_maximum(as_sys_time(duration_milliseconds()))
+    # clock_maximum(as_sys_time(duration_microseconds()))
+    clock_maximum(as_sys_time(duration_nanoseconds()))
+
+    # clock_maximum(as_naive_time(duration_days()))
+    # clock_maximum(as_naive_time(duration_hours()))
+    # clock_maximum(as_naive_time(duration_minutes()))
+    # clock_maximum(as_naive_time(duration_seconds()))
+    # clock_maximum(as_naive_time(duration_milliseconds()))
+    # clock_maximum(as_naive_time(duration_microseconds()))
+    clock_maximum(as_naive_time(duration_nanoseconds()))
+  })
+
+  for (precision in precision_names()) {
+    precision <- precision_to_integer(precision)
+
+    if (precision < PRECISION_DAY) {
+      next
+    }
+
+    x <- duration_helper(0L, precision)
+
+    expect_identical(as_duration(clock_maximum(as_sys_time(x))), clock_maximum(x))
+    expect_identical(as_duration(clock_maximum(as_naive_time(x))), clock_maximum(x))
+  }
+})
+
+# ------------------------------------------------------------------------------
+# min() / max() / range()
+
+test_that("min() / max() / range() works", {
+  x <- naive_days(c(1, 3, 2, 1, -1))
+
+  expect_identical(min(x), naive_days(-1))
+  expect_identical(max(x), naive_days(3))
+  expect_identical(range(x), naive_days(c(-1, 3)))
+})
+
+test_that("min() / max() / range() works with `NA`", {
+  x <- naive_days(c(1, NA, 2, 0))
+
+  expect_identical(min(x), naive_days(NA))
+  expect_identical(max(x), naive_days(NA))
+  expect_identical(range(x), naive_days(c(NA, NA)))
+
+  expect_identical(min(x, na.rm = TRUE), naive_days(0))
+  expect_identical(max(x, na.rm = TRUE), naive_days(2))
+  expect_identical(range(x, na.rm = TRUE), naive_days(c(0, 2)))
+})
+
+test_that("min() / max() / range() works when empty", {
+  x <- naive_days()
+
+  expect_identical(min(x), clock_maximum(x))
+  expect_identical(max(x), clock_minimum(x))
+  expect_identical(range(x), c(clock_maximum(x), clock_minimum(x)))
+
+  x <- naive_days(c(NA, NA))
+
+  expect_identical(min(x, na.rm = TRUE), clock_maximum(x))
+  expect_identical(max(x, na.rm = TRUE), clock_minimum(x))
+  expect_identical(range(x, na.rm = TRUE), c(clock_maximum(x), clock_minimum(x)))
 })

@@ -36,6 +36,10 @@ is_naive_time <- function(x) {
   inherits(x, "clock_naive_time")
 }
 
+check_naive_time <- function(x, ..., arg = caller_arg(x), call = caller_env()) {
+  check_inherits(x, what = "clock_naive_time", arg = arg, call = call)
+}
+
 # ------------------------------------------------------------------------------
 
 #' Parsing: naive-time
@@ -111,11 +115,12 @@ naive_time_parse <- function(x,
                              format = NULL,
                              precision = "second",
                              locale = clock_locale()) {
-  precision <- validate_time_point_precision_string(precision)
+  check_dots_empty0(...)
+  check_time_point_precision(precision)
+  precision <- precision_to_integer(precision)
 
   fields <- time_point_parse(
     x = x,
-    ...,
     format = format,
     precision = precision,
     locale = locale,
@@ -148,6 +153,8 @@ naive_time_parse <- function(x,
 #' native date and date-time types. Like converting from a zoned-time, these
 #' retain the printed time.
 #'
+#' @inheritParams rlang::args_dots_empty
+#'
 #' @param x `[object]`
 #'
 #'   An object to convert to a naive-time.
@@ -166,24 +173,26 @@ naive_time_parse <- function(x,
 #'
 #' ymd <- set_day(ym, 10)
 #' as_naive_time(ymd)
-as_naive_time <- function(x) {
+as_naive_time <- function(x, ...) {
   UseMethod("as_naive_time")
 }
 
 #' @export
-as_naive_time.clock_naive_time <- function(x) {
-  x
+as_naive_time.default <- function(x, ...) {
+  stop_clock_unsupported(x)
 }
 
 #' @export
-as_naive_time.clock_calendar <- function(x) {
-  stop_clock_unsupported_calendar_op("as_naive_time")
+as_naive_time.clock_naive_time <- function(x, ...) {
+  check_dots_empty0(...)
+  x
 }
 
 # ------------------------------------------------------------------------------
 
 #' @export
-as_sys_time.clock_naive_time <- function(x) {
+as_sys_time.clock_naive_time <- function(x, ...) {
+  check_dots_empty0(...)
   new_sys_time_from_fields(x, time_point_precision_attribute(x), clock_rcrd_names(x))
 }
 
@@ -445,9 +454,9 @@ as_zoned_time.clock_naive_time <- function(x,
                                            ...,
                                            nonexistent = NULL,
                                            ambiguous = NULL) {
-  check_dots_empty()
+  check_dots_empty0(...)
 
-  zone <- zone_validate(zone)
+  check_zone(zone)
 
   # Promote to at least seconds precision for `zoned_time`
   ptype <- vec_ptype2(x, clock_empty_naive_time_second, y_arg = "")
@@ -457,18 +466,18 @@ as_zoned_time.clock_naive_time <- function(x,
   precision <- time_point_precision_attribute(x)
   names <- clock_rcrd_names(x)
 
-  nonexistent <- validate_nonexistent(nonexistent, size)
+  nonexistent <- check_nonexistent(nonexistent, size)
 
-  info <- validate_ambiguous(ambiguous, size, zone)
+  info <- check_ambiguous(ambiguous, size, zone)
   method <- info$method
 
   if (identical(method, "string")) {
     ambiguous <- info$ambiguous
-    fields <- as_zoned_sys_time_from_naive_time_cpp(x, precision, zone, nonexistent, ambiguous)
+    fields <- as_zoned_sys_time_from_naive_time_cpp(x, precision, zone, nonexistent, ambiguous, current_env())
   } else if (identical(method, "reference")) {
     reference <- info$reference
     ambiguous <- info$ambiguous
-    fields <- as_zoned_sys_time_from_naive_time_with_reference_cpp(x, precision, zone, nonexistent, ambiguous, reference)
+    fields <- as_zoned_sys_time_from_naive_time_with_reference_cpp(x, precision, zone, nonexistent, ambiguous, reference, current_env())
   } else {
     abort("Internal error: Unknown ambiguous handling method.")
   }
@@ -476,59 +485,64 @@ as_zoned_time.clock_naive_time <- function(x,
   new_zoned_time_from_fields(fields, precision, zone, names)
 }
 
-validate_nonexistent <- function(nonexistent, size) {
-  nonexistent <- strict_validate_nonexistent(nonexistent)
+check_nonexistent <- function(nonexistent, size, ..., call = caller_env()) {
+  check_dots_empty0(...)
+
+  nonexistent <- check_nonexistent_strict(nonexistent, call = call)
 
   nonexistent_size <- vec_size(nonexistent)
 
   if (nonexistent_size != 1L && nonexistent_size != size) {
-    abort(paste0("`nonexistent` must have length 1, or ", size, "."))
+    cli::cli_abort("{.arg nonexistent} must have length 1 or {size}.", call = call)
   }
 
-  if (!is_character(nonexistent)) {
-    abort("`nonexistent` must be a character vector, or `NULL`.")
-  }
+  check_character(nonexistent, allow_null = TRUE, call = call)
 
   nonexistent
 }
 
-validate_ambiguous <- function(ambiguous, size, zone) {
+check_ambiguous <- function(ambiguous, size, zone, ..., call = caller_env()) {
+  check_dots_empty0(...)
+
   if (is_null(ambiguous)) {
-    ambiguous <- strict_validate_ambiguous(ambiguous)
+    ambiguous <- check_ambiguous_strict(ambiguous, call = call)
     return(list(method = "string", ambiguous = ambiguous))
   }
 
   if (is_character(ambiguous)) {
-    ambiguous <- validate_ambiguous_chr(ambiguous, size)
+    ambiguous <- check_ambiguous_chr(ambiguous, size, call = call)
     return(list(method = "string", ambiguous = ambiguous))
   }
 
   if (is_zoned_time(ambiguous) || inherits(ambiguous, "POSIXt")) {
-    # Implied `NULL`, to be validated by `strict_validate_ambiguous()`
+    # Implied `NULL`, to be validated by `check_ambiguous_strict()`
     ambiguous <- list(ambiguous, NULL)
   }
 
   if (is_list(ambiguous)) {
-    result <- validate_ambiguous_list(ambiguous, size, zone)
+    result <- check_ambiguous_list(ambiguous, size, zone, call = call)
     reference <- result$reference
     ambiguous <- result$ambiguous
     return(list(method = "reference", reference = reference, ambiguous = ambiguous))
   }
 
-  abort("`ambiguous` must be a character vector, a zoned-time, a POSIXct, or a list.")
+  cli::cli_abort(
+    "{.arg ambiguous} must be a character vector, a zoned-time, a POSIXct, or a list, not {.obj_type_friendly {ambiguous}}.",
+    call = call
+  )
 }
 
-validate_ambiguous_chr <- function(ambiguous, size) {
+check_ambiguous_chr <- function(ambiguous, size, call) {
   ambiguous_size <- vec_size(ambiguous)
 
   if (ambiguous_size != 1L && ambiguous_size != size) {
-    abort(paste0("`ambiguous` must have length 1, or ", size, "."))
+    cli::cli_abort("{.arg ambiguous} must have length 1 or {size}.", call = call)
   }
 
   ambiguous
 }
 
-validate_ambiguous_zoned <- function(ambiguous, size, zone) {
+check_ambiguous_zoned <- function(ambiguous, size, zone, call) {
   # POSIXt -> zoned_time
   reference <- as_zoned_time(ambiguous)
 
@@ -536,10 +550,10 @@ validate_ambiguous_zoned <- function(ambiguous, size, zone) {
   reference_zone <- zoned_time_zone_attribute(reference)
 
   if (reference_size != 1L && reference_size != size) {
-    abort(paste0("A zoned-time or POSIXct `ambiguous` must have length 1, or ", size, "."))
+    cli::cli_abort("A zoned-time or POSIXct {.arg ambiguous} must have length 1 or {size}.", call = call)
   }
   if (reference_zone != zone) {
-    abort("A zoned-time or POSIXct `ambiguous` must have the same zone as `zone`.")
+    cli::cli_abort("A zoned-time or POSIXct {.arg ambiguous} must have the same zone as {.arg zone}.", call = call)
   }
 
   # Force seconds precision to avoid the need for C++ templating
@@ -550,29 +564,29 @@ validate_ambiguous_zoned <- function(ambiguous, size, zone) {
   reference
 }
 
-validate_ambiguous_list <- function(ambiguous, size, zone) {
+check_ambiguous_list <- function(ambiguous, size, zone, call) {
   if (length(ambiguous) != 2L) {
-    abort("A list `ambiguous` must have length 2.")
+    cli::cli_abort("A list {.arg ambiguous} must have length 2.", call = call)
   }
 
   reference <- ambiguous[[1]]
 
   if (!is_zoned_time(reference) && !inherits(reference, "POSIXt")) {
-    abort("The first element of a list `ambiguous` must be a zoned-time or POSIXt.")
+    cli::cli_abort("The first element of a list {.arg ambiguous} must be a zoned-time or POSIXt.", call = call)
   }
 
-  reference <- validate_ambiguous_zoned(reference, size, zone)
+  reference <- check_ambiguous_zoned(reference, size, zone, call = call)
 
   ambiguous <- ambiguous[[2]]
 
   if (is_null(ambiguous)) {
-    ambiguous <- strict_validate_ambiguous(ambiguous)
+    ambiguous <- check_ambiguous_strict(ambiguous, call = call)
   }
   if (!is_character(ambiguous)) {
-    abort("The second element of a list `ambiguous` must be a character vector, or `NULL`.")
+    cli::cli_abort("The second element of a list {.arg ambiguous} must be a character vector, or `NULL`.", call = call)
   }
 
-  ambiguous <- validate_ambiguous_chr(ambiguous, size)
+  ambiguous <- check_ambiguous_chr(ambiguous, size, call = call)
 
   list(reference = reference, ambiguous = ambiguous)
 }
@@ -712,9 +726,8 @@ as.character.clock_naive_time <- function(x, ...) {
 #' as_zoned_time(df$sys, "America/Los_Angeles")
 #' as_zoned_time(df$sys, "Europe/London")
 naive_time_info <- function(x, zone) {
-  if (!is_naive_time(x)) {
-    abort("`x` must be a naive-time.")
-  }
+  check_naive_time(x)
+  check_character(zone)
 
   precision <- time_point_precision_attribute(x)
 
@@ -732,6 +745,18 @@ new_naive_time_info_from_fields <- function(fields) {
   fields[["first"]] <- new_sys_time_info_from_fields(fields[["first"]])
   fields[["second"]] <- new_sys_time_info_from_fields(fields[["second"]])
   new_data_frame(fields)
+}
+
+# ------------------------------------------------------------------------------
+
+#' @export
+vec_ptype_full.clock_naive_time <- function(x, ...) {
+  time_point_ptype(x, type = "full")
+}
+
+#' @export
+vec_ptype_abbr.clock_naive_time <- function(x, ...) {
+  time_point_ptype(x, type = "abbr")
 }
 
 # ------------------------------------------------------------------------------

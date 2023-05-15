@@ -32,7 +32,7 @@ their_time
 ## -----------------------------------------------------------------------------
 my_time <- as.POSIXct("2019-01-30 09:00:00", "America/New_York")
 
-date_set_zone(my_time, "Asia/Shanghai")
+date_time_set_zone(my_time, "Asia/Shanghai")
 
 ## -----------------------------------------------------------------------------
 my_time <- year_month_day(2019, 1, 30, 9) %>%
@@ -62,7 +62,7 @@ my_time <- as.POSIXct("2019-01-30 09:00:00", "America/New_York")
 my_time %>%
   as_naive_time() %>%
   as.POSIXct("Asia/Shanghai") %>%
-  date_set_zone("America/New_York")
+  date_time_set_zone("America/New_York")
 
 ## -----------------------------------------------------------------------------
 days <- as_naive_time(year_month_day(2019, c(1, 2), 1))
@@ -364,6 +364,33 @@ date_count_between(date_start(x, "month"), date_start(y, "month"), "month")
 date_count_between(x, y, "month")
 
 ## -----------------------------------------------------------------------------
+x <- date_build(2019:2026)
+y <- as_year_week_day(x, start = clock_weekdays$monday)
+
+data.frame(x = x, y = y)
+
+## -----------------------------------------------------------------------------
+get_year(y)
+get_week(y)
+
+# Last week in the ISO year
+set_week(y, "last")
+
+## -----------------------------------------------------------------------------
+calendar_narrow(y, "week")
+
+## -----------------------------------------------------------------------------
+x <- date_build(2019:2026)
+iso <- as_year_week_day(x, start = clock_weekdays$monday)
+epi <- as_year_week_day(x, start = clock_weekdays$sunday)
+
+data.frame(x = x, iso = iso, epi = epi)
+
+## -----------------------------------------------------------------------------
+get_year(epi)
+get_week(epi)
+
+## -----------------------------------------------------------------------------
 x <- "2020-10-25 01:30:00 IST"
 
 zoned_time_parse_abbrev(x, "Asia/Kolkata")
@@ -438,17 +465,23 @@ as_zoned_time(x, "Asia/Jerusalem", ambiguous = "latest")
 ## -----------------------------------------------------------------------------
 x <- zoned_time_parse_complete("2019-01-01T00:00:00-05:00[America/New_York]")
 
-info <- sys_time_info(as_sys_time(x), zoned_time_zone(x))
+info <- zoned_time_info(x)
 
 # Beginning of the current DST range
-as_zoned_time(info$begin, zoned_time_zone(x))
+info$begin
 
 # Beginning of the next DST range
-as_zoned_time(info$end, zoned_time_zone(x))
+info$end
 
 ## -----------------------------------------------------------------------------
 # Last moment in time in the current DST range
 info$end %>%
+  as_sys_time() %>%
   add_seconds(-1) %>%
   as_zoned_time(zoned_time_zone(x))
+
+## -----------------------------------------------------------------------------
+x <- date_time_parse("2019-01-01 00:00:00", zone = "America/New_York")
+
+date_time_info(x)
 

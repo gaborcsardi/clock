@@ -213,7 +213,24 @@ test_that("allows `%z` and `%Z`", {
 # as_zoned_time()
 
 test_that("empty dots are checked", {
-  expect_snapshot_error(as_zoned_time(sys_seconds(), "UTC", 123))
+  expect_snapshot(error = TRUE, as_zoned_time(sys_seconds(), "UTC", 123))
+})
+
+# ------------------------------------------------------------------------------
+# vec_ptype_full() / vec_ptype_abbr()
+
+test_that("`vec_ptype_full()` prints correctly", {
+  expect_snapshot({
+    vec_ptype_full(sys_days())
+    vec_ptype_full(sys_seconds(1:5))
+  })
+})
+
+test_that("`vec_ptype_abbr()` prints correctly", {
+  expect_snapshot({
+    vec_ptype_abbr(sys_days())
+    vec_ptype_abbr(sys_seconds(1:5))
+  })
 })
 
 # ------------------------------------------------------------------------------
@@ -224,7 +241,7 @@ test_that("ptype is correct", {
   ptype <- sys_days(integer())
 
   for (precision in precision_names()) {
-    if (validate_precision_string(precision) < PRECISION_DAY) {
+    if (precision_to_integer(precision) < PRECISION_DAY) {
       next
     }
 

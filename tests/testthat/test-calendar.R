@@ -30,30 +30,30 @@ test_that("`max` defaults to `getOption('max.print')` but can be overridden", {
 test_that("`max` is validated", {
   x <- year_month_day(2019)
 
-  expect_snapshot_error(print(x, max = -1))
-  expect_snapshot_error(print(x, max = c(1, 2)))
-  expect_snapshot_error(print(x, max = NA_integer_))
-  expect_snapshot_error(print(x, max = "foo"))
+  expect_snapshot(error = TRUE, print(x, max = -1))
+  expect_snapshot(error = TRUE, print(x, max = c(1, 2)))
+  expect_snapshot(error = TRUE, print(x, max = NA_integer_))
+  expect_snapshot(error = TRUE, print(x, max = "foo"))
 })
 
 # ------------------------------------------------------------------------------
 # calendar_group()
 
 test_that("group: `precision` is validated", {
-  expect_snapshot_error(calendar_group(year_month_day(2019), "foo"))
+  expect_snapshot(error = TRUE, calendar_group(year_month_day(2019), "foo"))
 })
 
 test_that("group: `precision` must be calendar specific", {
-  expect_snapshot_error(calendar_group(year_month_day(2019), "quarter"))
+  expect_snapshot(error = TRUE, calendar_group(year_month_day(2019), "quarter"))
 })
 
 test_that("group: `precision` can't be wider than `x`", {
-  expect_snapshot_error(calendar_group(year_month_day(2019, 1, 1), "second"))
+  expect_snapshot(error = TRUE, calendar_group(year_month_day(2019, 1, 1), "second"))
 })
 
 test_that("group: can't group a subsecond precision `x` at another subsecond precision", {
   x <- calendar_widen(year_month_day(2019), "nanosecond")
-  expect_snapshot_error(calendar_group(x, "microsecond"))
+  expect_snapshot(error = TRUE, calendar_group(x, "microsecond"))
 })
 
 test_that("group: can group subsecond precision at the same subsecond precision", {
@@ -65,20 +65,20 @@ test_that("group: can group subsecond precision at the same subsecond precision"
 # calendar_narrow()
 
 test_that("narrow: `precision` is validated", {
-  expect_snapshot_error(calendar_narrow(year_month_day(2019), "foo"))
+  expect_snapshot(error = TRUE, calendar_narrow(year_month_day(2019), "foo"))
 })
 
 test_that("narrow: `precision` must be calendar specific", {
-  expect_snapshot_error(calendar_narrow(year_month_day(2019), "quarter"))
+  expect_snapshot(error = TRUE, calendar_narrow(year_month_day(2019), "quarter"))
 })
 
 test_that("narrow: `precision` can't be wider than `x`", {
-  expect_snapshot_error(calendar_narrow(year_month_day(2019, 1, 1), "second"))
+  expect_snapshot(error = TRUE, calendar_narrow(year_month_day(2019, 1, 1), "second"))
 })
 
 test_that("narrow: can't narrow a subsecond precision `x` to another subsecond precision", {
   x <- calendar_widen(year_month_day(2019), "nanosecond")
-  expect_snapshot_error(calendar_narrow(x, "microsecond"))
+  expect_snapshot(error = TRUE, calendar_narrow(x, "microsecond"))
 })
 
 test_that("narrow: can narrow subsecond precision to same subsecond precision", {
@@ -90,20 +90,20 @@ test_that("narrow: can narrow subsecond precision to same subsecond precision", 
 # calendar_widen()
 
 test_that("widen: `precision` is validated", {
-  expect_snapshot_error(calendar_widen(year_month_day(2019), "foo"))
+  expect_snapshot(error = TRUE, calendar_widen(year_month_day(2019), "foo"))
 })
 
 test_that("widen: `precision` must be calendar specific", {
-  expect_snapshot_error(calendar_widen(year_month_day(2019), "quarter"))
+  expect_snapshot(error = TRUE, calendar_widen(year_month_day(2019), "quarter"))
 })
 
 test_that("widen: `precision` can't be narrower than `x`", {
-  expect_snapshot_error(calendar_widen(year_month_day(2019, 1, 1), "month"))
+  expect_snapshot(error = TRUE, calendar_widen(year_month_day(2019, 1, 1), "month"))
 })
 
 test_that("widen: can't widen a subsecond precision `x` to another subsecond precision", {
   x <- calendar_widen(year_month_day(2019), "millisecond")
-  expect_snapshot_error(calendar_widen(x, "microsecond"))
+  expect_snapshot(error = TRUE, calendar_widen(x, "microsecond"))
 })
 
 test_that("widen: can widen subsecond precision to the same subsecond precision", {
@@ -115,25 +115,25 @@ test_that("widen: can widen subsecond precision to the same subsecond precision"
 # calendar_start()
 
 test_that("start: `x` is validated", {
-  expect_snapshot_error(calendar_start(1))
+  expect_snapshot(error = TRUE, calendar_start(1))
 })
 
 test_that("start: `precision` is validated", {
-  expect_snapshot_error(calendar_start(year_month_day(2019), "foo"))
-  expect_snapshot_error(calendar_start(year_month_day(2019), 1))
+  expect_snapshot(error = TRUE, calendar_start(year_month_day(2019), "foo"))
+  expect_snapshot(error = TRUE, calendar_start(year_month_day(2019), 1))
 })
 
 test_that("start: errors on unsupported precision", {
-  expect_snapshot_error(calendar_start(year_month_day(2019, 1), "quarter"))
+  expect_snapshot(error = TRUE, calendar_start(year_month_day(2019, 1), "quarter"))
 })
 
 test_that("start: `precision` can't be more precise than `x`", {
-  expect_snapshot_error(calendar_start(year_month_day(2019), "month"))
+  expect_snapshot(error = TRUE, calendar_start(year_month_day(2019), "month"))
 })
 
 test_that("start: can't mix different subsecond precisions", {
   x <- year_month_day(2019, 1, 1, 1, 1, 1, 1, subsecond_precision = "microsecond")
-  expect_snapshot_error(calendar_start(x, "millisecond"))
+  expect_snapshot(error = TRUE, calendar_start(x, "millisecond"))
 })
 
 test_that("start: can use same subsecond precision", {
@@ -187,25 +187,25 @@ test_that("start: invalid dates are adjusted", {
 # calendar_end()
 
 test_that("end: `x` is validated", {
-  expect_snapshot_error(calendar_end(1))
+  expect_snapshot(error = TRUE, calendar_end(1))
 })
 
 test_that("end: `precision` is validated", {
-  expect_snapshot_error(calendar_end(year_month_day(2019), "foo"))
-  expect_snapshot_error(calendar_end(year_month_day(2019), 1))
+  expect_snapshot(error = TRUE, calendar_end(year_month_day(2019), "foo"))
+  expect_snapshot(error = TRUE, calendar_end(year_month_day(2019), 1))
 })
 
 test_that("end: errors on unsupported precision", {
-  expect_snapshot_error(calendar_end(year_month_day(2019, 1), "quarter"))
+  expect_snapshot(error = TRUE, calendar_end(year_month_day(2019, 1), "quarter"))
 })
 
 test_that("end: `precision` can't be more precise than `x`", {
-  expect_snapshot_error(calendar_end(year_month_day(2019), "month"))
+  expect_snapshot(error = TRUE, calendar_end(year_month_day(2019), "month"))
 })
 
 test_that("end: can't mix different subsecond precisions", {
   x <- year_month_day(2019, 1, 1, 1, 1, 1, 1, subsecond_precision = "microsecond")
-  expect_snapshot_error(calendar_end(x, "millisecond"))
+  expect_snapshot(error = TRUE, calendar_end(x, "millisecond"))
 })
 
 test_that("end: can use same subsecond precision", {
@@ -288,6 +288,54 @@ test_that("`n` is validated", {
 })
 
 # ------------------------------------------------------------------------------
+# calendar_spanning_seq()
+
+test_that("generates the regular sequence along the full span", {
+  x <- year_month_day(c(2019, 2022, 2020), c(2, 1, 3))
+  expect_identical(
+    calendar_spanning_seq(x),
+    seq(year_month_day(2019, 2), year_month_day(2022, 1), by = 1)
+  )
+})
+
+test_that("missing values are removed", {
+  x <- year_month_day(c(1, NA, 0, 2))
+  expect_identical(calendar_spanning_seq(x), year_month_day(0:2))
+
+  x <- year_month_day(c(NA, NA))
+  expect_identical(calendar_spanning_seq(x), year_month_day(integer()))
+})
+
+test_that("works with empty vectors", {
+  x <- year_month_day(integer())
+  expect_identical(calendar_spanning_seq(x), x)
+})
+
+test_that("validates the input", {
+  expect_snapshot(error = TRUE, {
+    calendar_spanning_seq(1)
+  })
+})
+
+test_that("the input must be at a precision allowed by `seq()`", {
+  expect_snapshot(error = TRUE, {
+    calendar_spanning_seq(year_month_day(2019, 1, 2))
+  })
+})
+
+test_that("errors on types that don't support min/max calls", {
+  # This is fine
+  x <- year_month_weekday(2019, c(1, 4))
+  expect_identical(calendar_spanning_seq(x), year_month_weekday(2019, 1:4))
+
+  # But this is invalid
+  x <- year_month_weekday(2019, 1, 1, 1)
+  expect_snapshot(error = TRUE, {
+    calendar_spanning_seq(x)
+  })
+})
+
+# ------------------------------------------------------------------------------
 # calendar_precision()
 
 test_that("precision: can get the precision", {
@@ -297,5 +345,37 @@ test_that("precision: can get the precision", {
 })
 
 test_that("precision: can only be called on calendars", {
-  expect_snapshot_error(calendar_precision(sys_days(0)))
+  expect_snapshot(error = TRUE, calendar_precision(sys_days(0)))
+})
+
+# ------------------------------------------------------------------------------
+# add_*()
+
+test_that("addition helpers throw error with advice", {
+  x <- year_month_day(2019)
+
+  expect_snapshot(error = TRUE, {
+    add_weeks(x)
+  })
+  expect_snapshot(error = TRUE, {
+    add_days(x)
+  })
+  expect_snapshot(error = TRUE, {
+    add_hours(x)
+  })
+  expect_snapshot(error = TRUE, {
+    add_minutes(x)
+  })
+  expect_snapshot(error = TRUE, {
+    add_seconds(x)
+  })
+  expect_snapshot(error = TRUE, {
+    add_milliseconds(x)
+  })
+  expect_snapshot(error = TRUE, {
+    add_microseconds(x)
+  })
+  expect_snapshot(error = TRUE, {
+    add_nanoseconds(x)
+  })
 })

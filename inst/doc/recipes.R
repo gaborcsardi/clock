@@ -9,14 +9,14 @@ library(clock)
 library(magrittr)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  zoned_time_now("")
-#  #> <zoned_time<nanosecond><America/New_York (current)>[1]>
-#  #> [1] "2021-02-10T15:54:29.875011000-05:00"
+# zoned_time_now("")
+# #> <zoned_time<nanosecond><America/New_York (current)>[1]>
+# #> [1] "2021-02-10T15:54:29.875011000-05:00"
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  zoned_time_now("Asia/Shanghai")
-#  #> <zoned_time<nanosecond><Asia/Shanghai>[1]>
-#  #> [1] "2021-02-11T04:54:29.875011000+08:00"
+# zoned_time_now("Asia/Shanghai")
+# #> <zoned_time<nanosecond><Asia/Shanghai>[1]>
+# #> [1] "2021-02-11T04:54:29.875011000+08:00"
 
 ## -----------------------------------------------------------------------------
 my_time <- year_month_day(2019, 1, 30, 9) %>%
@@ -157,17 +157,21 @@ date_seq(date_build(2019, 1), by = 2, total_size = 10)
 date_seq(date_build(2019, 1), by = duration_months(2), total_size = 10)
 
 ## ----error=TRUE---------------------------------------------------------------
+try({
 date_seq(
   date_build(2019, 1, 1),
   to = date_build(2019, 10, 2),
   by = duration_months(2)
 )
+})
 
 ## ----error=TRUE---------------------------------------------------------------
+try({
 jan31 <- date_build(2019, 1, 31)
 dec31 <- date_build(2019, 12, 31)
 
 date_seq(jan31, to = dec31, by = duration_months(1))
+})
 
 ## -----------------------------------------------------------------------------
 date_seq(jan31, to = dec31, by = duration_months(1), invalid = "previous")

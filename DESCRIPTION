@@ -1,6 +1,6 @@
 Package: clock
 Title: Date-Time Types and Tools
-Version: 0.7.1
+Version: 0.7.2
 Authors@R: c(
     person("Davis", "Vaughan", , "davis@posit.co", role = c("aut", "cre")),
     person("Posit Software, PBC", role = c("cph", "fnd"))
@@ -19,7 +19,7 @@ Imports: cli (>= 3.6.1), lifecycle (>= 1.0.3), rlang (>= 1.1.0), tzdb
         (>= 0.4.0), vctrs (>= 0.6.1)
 Suggests: covr, knitr, magrittr, pillar, rmarkdown, slider (>= 0.3.0),
         testthat (>= 3.0.0), withr
-LinkingTo: cpp11 (>= 0.4.3), tzdb (>= 0.4.0)
+LinkingTo: cpp11 (>= 0.5.1), tzdb (>= 0.4.0)
 VignetteBuilder: knitr
 Config/build/compilation-database: true
 Config/Needs/website: lubridate, tidyverse/tidytemplate
@@ -28,9 +28,9 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
 NeedsCompilation: yes
-Packaged: 2024-07-18 16:18:44 UTC; davis
+Packaged: 2025-01-21 22:04:46 UTC; davis
 Author: Davis Vaughan [aut, cre],
   Posit Software, PBC [cph, fnd]
 Maintainer: Davis Vaughan <davis@posit.co>
 Repository: CRAN
-Date/Publication: 2024-07-18 19:30:02 UTC
+Date/Publication: 2025-01-21 23:00:02 UTC
